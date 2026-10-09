@@ -1,0 +1,26 @@
+name: Refresh league data
+
+on:
+  schedule:
+    - cron: "0 12 * * 2"  # Tuesday 12:00 UTC, after Monday Night Football
+    - cron: "0 12 * * 5"  # Friday 12:00 UTC, after Thursday Night Football
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/build.py
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add data/site-data.js
+          git diff --cached --quiet || (git commit -m "Refresh league data" && git push)
