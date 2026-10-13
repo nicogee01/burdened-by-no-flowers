@@ -351,3 +351,30 @@ tr.cut td { border-bottom: 2px dashed var(--line-2); }
 .swap--cols { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
 .swap--cols .delta { white-space: nowrap; color: var(--muted); }
 .swap li { grid-template-columns: minmax(0, 1fr) auto auto; }
+
+/* ================= PA PACE ================= */
+.pace { border-top: 5px solid var(--accent); }
+.pace .eyebrow { display: flex; }
+.pace__stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.14); border-radius: 12px; overflow: hidden; margin: 0; }
+.pace__stats > div { background: var(--ink); color: #fbf7ee; padding: 16px; }
+.pace__stats dt { font-family: var(--f-label); font-weight: 700; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: #a9b4c6; }
+.pace__stats dd { margin: 2px 0; font-family: var(--f-display); font-size: clamp(30px, 4vw, 44px); line-height: 1.05; font-variant-numeric: tabular-nums; }
+.pace__stats dd.bad { color: #ff5468; }
+.pace__stats dd.good { color: var(--gold-2); }
+.pace__stats p { margin: 0; font-size: 13px; color: #d5dbe6; }
+@media (max-width: 760px) { .pace__stats { grid-template-columns: 1fr 1fr; } }
+.paceboard { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.paceboard li { display: grid; grid-template-columns: 22px minmax(0, 1.2fr) minmax(60px, 1fr) 56px; gap: 10px; align-items: center; padding: 6px 8px; border-radius: 8px; font-size: 14px; }
+.paceboard--games li { grid-template-columns: 22px minmax(0, 1fr) 56px; }
+.paceboard__n { font-family: var(--f-label); font-weight: 700; color: var(--faint); text-align: right; }
+.paceboard__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.paceboard__name small { font-weight: 500; color: var(--faint); margin-left: 4px; }
+.paceboard__bar { height: 12px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.paceboard__bar i { display: block; height: 100%; background: #9aa6b8; }
+.paceboard__v { font-family: var(--f-label); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.paceboard li.is-me { background: rgba(200, 16, 46, 0.1); box-shadow: inset 3px 0 0 var(--accent); }
+.paceboard li.is-me .paceboard__bar i { background: repeating-linear-gradient(135deg, var(--accent) 0 6px, #e0485e 6px 12px); }
+.paceboard li.is-me .paceboard__v { color: var(--accent); }
+.paceboard li.is-rec .paceboard__bar i { background: var(--gold); }
+.paceboard li.is-rec .paceboard__v { color: var(--gold); }
+.paceboard li.is-pace .paceboard__bar i { background: repeating-linear-gradient(135deg, #9aa6b8 0 6px, #b8c1cf 6px 12px); }

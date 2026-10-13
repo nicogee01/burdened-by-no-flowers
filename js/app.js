@@ -128,6 +128,51 @@
     $("#caseCards").innerHTML = hero + cards.map(([c, k, v, t]) => `<article class="card ${c ? "card--" + c : ""} reveal"><p class="card__k">${k}</p><p class="card__v">${v}</p><p class="card__t">${esc(t)}</p></article>`).join("");
   })();
 
+  // ---------- points-against pace ----------
+  (function pace() {
+    const live = cur.status !== "complete" && cur.weeksDone > 0 && cur.weeksDone < cur.regEnd;
+    const rows = D.seasons.filter((s) => s.weeksDone).flatMap((s) => s.teams.map((t) => {
+      const partial = s.weeksDone < s.regEnd;
+      return { s, t, pa: partial ? (t.pa / s.weeksDone) * s.regEnd : t.pa, partial, mine: t.owner === D.me };
+    }));
+    const complete = rows.filter((r) => !r.partial).sort((a, b) => b.pa - a.pa);
+    const rec = complete[0];
+    const myCur = rows.find((r) => r.s === cur && r.mine);
+    if (!rec || !myCur) { $("#pace").hidden = true; return; }
+    const perG = myCur.t.pa / cur.weeksDone, recPerG = rec.pa / rec.s.regEnd;
+    const over = myCur.pa - rec.pa;
+    $("#paceTitle").textContent = live
+      ? (over > 0 ? `On pace to break the league record by ${f0(over)}` : `On pace for ${f0(myCur.pa)} points against`)
+      : `${f0(myCur.pa)} points against`;
+    $("#paceStats").innerHTML = [
+      ["Against you so far", f1(myCur.t.pa), `${cur.weeksDone} games · ${ord(rankBy(cur, "pa", cur.myRid))} in the league`, "bad"],
+      ["Per game", f1(perG), `record pace is ${f1(recPerG)}/game`, "bad"],
+      [live ? "On pace for" : "Final", f0(myCur.pa), live ? `over ${cur.regEnd} weeks` : "regular season", "bad"],
+      ["League record", f0(rec.pa), `${esc(rec.t.name)}, ${rec.s.season}`, "good"],
+    ].map(([k, v, d, c]) => `<div><dt>${k}</dt><dd class="${c}">${v}</dd><p>${d}</p></div>`).join("");
+
+    // leaderboard: top 10 completed seasons, plus your pace and any other pace above the record
+    const board = [...complete.slice(0, 10), ...rows.filter((r) => r.partial && (r.mine || r.pa >= rec.pa))].sort((a, b) => b.pa - a.pa);
+    const max = board[0].pa;
+    $("#paceChart").innerHTML = `<ol class="paceboard">${board.map((r, i) => {
+      const cls = r.partial && r.mine ? "is-me" : r === rec ? "is-rec" : r.partial ? "is-pace" : "";
+      return `<li class="${cls}" data-tip="${esc(`<b>${r.t.name}</b><br>${r.s.season} · ${r.partial ? `on pace (${f1(r.t.pa)} through ${r.s.weeksDone} weeks)` : "final regular season"}<br>${f1(r.pa / r.s.regEnd)} per game`)}">
+        <span class="paceboard__n">${i + 1}</span>
+        <span class="paceboard__name">${esc(r.t.name)} <small>${r.s.season}${r.partial ? " · pace" : ""}${r === rec ? " · record" : ""}</small></span>
+        <span class="paceboard__bar"><i style="width:${(r.pa / max) * 100}%"></i></span>
+        <span class="paceboard__v">${f0(r.pa)}</span></li>`;
+    }).join("")}</ol>`;
+
+    // biggest single games against, regular season
+    const games = D.seasons.flatMap((s) => s.weeks.flatMap((wk, i) => Object.entries(wk).map(([rid, v]) => ({ s, week: i + 1, victim: tm(s, rid), scorer: tm(s, v.opp), pts: wk[v.opp].pts, won: v.pts > wk[v.opp].pts }))))
+      .sort((a, b) => b.pts - a.pts).slice(0, 8);
+    $("#paceGames").innerHTML = `<ol class="paceboard paceboard--games">${games.map((g, i) => `<li class="${g.victim.owner === D.me ? "is-me" : ""}">
+        <span class="paceboard__n">${i + 1}</span>
+        <span class="paceboard__name">${esc(g.scorer.name)} <small>vs ${esc(g.victim.name)} · ${g.s.season} wk ${g.week}${g.won ? " · still lost" : ""}</small></span>
+        <span class="paceboard__v">${f1(g.pts)}</span></li>`).join("")}</ol>
+      <p class="panel__note">${games.filter((g) => g.victim.owner === D.me).length ? `<b>${games.filter((g) => g.victim.owner === D.me).length} of the top ${games.length}</b> were scored against you.` : "None of these were against you. Small mercies."}</p>`;
+  })();
+
   // ---------- week chart ----------
   let chartSeason = cur.season;
   function weekChart() {

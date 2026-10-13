@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=4" />
+  <link rel="stylesheet" href="css/styles.css?v=5" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -64,6 +64,25 @@
         <p class="lede">Expected wins come from the all-play record: every week, how many of the other nine teams would you have beaten? A team with average luck wins about that share of its games. You haven't.</p>
       </div>
       <div class="cards" id="caseCards"></div>
+
+      <article class="panel pace" id="pace" style="margin-top:16px">
+        <header class="panel__head">
+          <p class="eyebrow" style="margin-bottom:6px">Points against, on pace</p>
+          <h3 id="paceTitle">Chasing the wrong record</h3>
+          <p class="panel__sub">Regular season only (weeks 1–14). Current-season totals are projected: points against so far ÷ games played × 14.</p>
+        </header>
+        <div class="pace__stats" id="paceStats"></div>
+        <div class="two" style="margin-top:20px">
+          <div>
+            <p class="bw__k">Most points against in a regular season, league history</p>
+            <div id="paceChart"></div>
+          </div>
+          <div>
+            <p class="bw__k">Biggest single-game scores against anyone</p>
+            <div id="paceGames"></div>
+          </div>
+        </div>
+      </article>
     </section>
 
     <!-- ===== WEEK BY WEEK ===== -->
@@ -235,7 +254,7 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="data/site-data.js?v=5"></script>
+  <script src="js/app.js?v=5"></script>
 </body>
 </html>
