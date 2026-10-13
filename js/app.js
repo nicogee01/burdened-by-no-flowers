@@ -224,6 +224,29 @@
   }).filter(Boolean);
   const calls = Object.fromEntries(myGames.map((g) => [g.week, "S"]));
 
+  // ---------- bye-week engine ----------
+  const B = D.byes && D.byes.season === cur.season ? D.byes : null;
+  const FLEX_OK = { FLEX: ["RB", "WR", "TE"], SUPER_FLEX: ["QB", "RB", "WR", "TE"], REC_FLEX: ["WR", "TE"], WRRB_FLEX: ["RB", "WR"] };
+  // greedy best lineup by points per game: fixed slots first, then flex slots
+  function bestLineup(players) {
+    const pool = players.filter((p) => !p.ir).sort((a, b) => b.ppg - a.ppg), used = new Set();
+    let total = 0;
+    const take = (ok) => { const p = pool.find((x) => !used.has(x.id) && ok.includes(x.pos)); if (p) { used.add(p.id); total += p.ppg; } };
+    B.slots.filter((s) => !FLEX_OK[s]).forEach((s) => take([s]));
+    B.slots.filter((s) => FLEX_OK[s]).forEach((s) => take(FLEX_OK[s]));
+    return { total, used };
+  }
+  const roster = (rid) => (B ? B.rosters[rid] || [] : []);
+  const fullLineup = B ? Object.fromEntries(cur.teams.map((t) => [t.rid, bestLineup(roster(t.rid))])) : {};
+  const byeHit = (rid, wk) => {
+    if (!B) return 0;
+    const out = roster(rid).filter((p) => p.bye === wk);
+    if (!out.length) return 0;
+    return fullLineup[rid].total - bestLineup(roster(rid).filter((p) => p.bye !== wk)).total;
+  };
+  const HIT = Object.fromEntries(cur.teams.map((t) => [t.rid, Object.fromEntries(remaining.map((w) => [w.week, byeHit(t.rid, w.week)]))]));
+  const proj = (rid, wk) => model[rid] - (HIT[rid][wk] || 0);
+
   function randn() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
 
   function simulate(N, forced) {
@@ -238,7 +261,7 @@
       const myRes = {};
       for (const wk of remaining) {
         for (const [a, b] of wk.pairs) {
-          let pa = model[a] + randn() * sd, pb = model[b] + randn() * sd;
+          let pa = proj(a, wk.week) + randn() * sd, pb = proj(b, wk.week) + randn() * sd;
           if (a === myRid || b === myRid) {
             const c = forced[wk.week];
             const mineA = a === myRid;
@@ -291,10 +314,10 @@
     $("#games").innerHTML = myGames.map((g) => {
       const o = tm(cur, g.opp), isDiv = o.div === myDiv, sw = base.swing[g.week];
       const pw = sw.w[1] ? sw.w[0] / sw.w[1] : 0, pl = sw.l[1] ? sw.l[0] / sw.l[1] : 0;
-      const winP = (() => { const z = (model[myRid] - model[g.opp]) / (sd * Math.SQRT2); return 0.5 * (1 + erf(z)); })();
+      const winP = (() => { const z = (proj(myRid, g.week) - proj(g.opp, g.week)) / (sd * Math.SQRT2); return 0.5 * (1 + erf(z)); })();
       return `<li class="game ${isDiv ? "is-div" : ""}">
         <span class="game__wk">Wk ${g.week}</span>
-        <div class="game__opp">${tname(o)}<div class="game__meta">${isDiv ? `<span class="tag">Division</span>` : ""}${o.w}–${o.l} · win chance ${pct(winP)} · bye odds ${pct(pw)} with a W, ${pct(pl)} with an L</div></div>
+        <div class="game__opp">${tname(o)}<div class="game__meta">${isDiv ? `<span class="tag">Division</span>` : ""}${o.w}–${o.l} · win chance ${pct(winP)} · bye odds ${pct(pw)} with a W, ${pct(pl)} with an L${HIT[myRid][g.week] || HIT[g.opp][g.week] ? ` · bye hit: you ${sgn(-HIT[myRid][g.week])}, them ${sgn(-HIT[g.opp][g.week])}` : ""}</div></div>
         <div class="pick3" role="group" aria-label="Week ${g.week} result">${["W", "S", "L"].map((v) => `<button type="button" data-wk="${g.week}" data-v="${v}" aria-pressed="${calls[g.week] === v}">${v === "S" ? "Sim" : v}</button>`).join("")}</div>
       </li>`;
     }).join("");
@@ -333,6 +356,71 @@
   } else {
     $("#road").querySelector(".lede").textContent = "The regular season is over.";
   }
+
+  // ---------- bye-week watch ----------
+  (function byeWatch() {
+    if (!B || !myGames.length) { $("#byes").hidden = true; return; }
+    const mineR = roster(myRid), myBest = fullLineup[myRid].used;
+    const chip = (p, best) => `<span class="pchip ${best.has(p.id) ? "is-core" : ""}" data-tip="${esc(`<b>${p.name}</b><br>${p.pos} · ${p.team} · bye wk ${p.bye}<br>${f1(p.ppg)} pts/game${best.has(p.id) ? "<br>In best lineup" : "<br>Bench depth"}`)}"><span class="pos-${esc(p.pos)}">${esc(p.pos)}</span> ${esc(p.name)} <small>${f1(p.ppg)}</small></span>`;
+    const outOf = (rid, wk) => roster(rid).filter((p) => p.bye === wk && !p.ir).sort((a, b) => b.ppg - a.ppg);
+
+    // summary cards
+    const worst = myGames.reduce((a, g) => (HIT[myRid][g.week] > HIT[myRid][a.week] ? g : a), myGames[0]);
+    const myTotal = myGames.reduce((a, g) => a + HIT[myRid][g.week], 0);
+    const oppTotal = myGames.reduce((a, g) => a + HIT[g.opp][g.week], 0);
+    const divTotal = myGames.filter((g) => tm(cur, g.opp).div === myDiv).reduce((a, g) => a + HIT[myRid][g.week], 0);
+    const stacks = Object.entries(mineR.filter((p) => p.bye > done && !p.ir).reduce((m, p) => ((m[p.bye] = m[p.bye] || []).push(p), m), {}))
+      .filter(([, ps]) => ps.length >= 3).sort((a, b) => b[1].length - a[1].length);
+    const wo = tm(cur, worst.opp), wOut = outOf(myRid, worst.week);
+    $("#byeCards").innerHTML = [
+      ["red", "Your worst bye week", `Wk ${worst.week}<small>${sgn(-HIT[myRid][worst.week])} pts</small>`,
+        `${wOut.length} players out: ${wOut.map((p) => p.name).join(", ")}. Opponent: ${wo.name}${wo.div === myDiv ? " (division)" : ""}, whose own byes cost them ${f1(HIT[worst.opp][worst.week])}.`],
+      [myTotal > oppTotal ? "red" : "gold", "Bye points, you vs. your opponents", `${f0(myTotal)}<small>vs ${f0(oppTotal)}</small>`,
+        `Across your remaining games, byes take about ${f1(myTotal)} points from your best lineup, and ${f1(oppTotal)} from your opponents' in the weeks they play you.`],
+      ["", "Bye damage in division games", `${f1(divTotal)}<small>pts</small>`,
+        `Of your bye losses, ${f1(divTotal)} land in division games, the ones that decide the bye.`],
+      stacks.length ? ["red", "Bye stack", `${stacks[0][1].length} on wk ${stacks[0][0]}`,
+        `${stacks[0][1].map((p) => `${p.name} (${p.team})`).join(", ")} all sit the same week. Moving one of them is the cheapest fix.`] : null,
+    ].filter(Boolean).map(([c, k, v, t]) => `<article class="card ${c ? "card--" + c : ""}"><p class="card__k">${k}</p><p class="card__v">${v}</p><p class="card__t">${esc(t)}</p></article>`).join("");
+
+    // week rows
+    $("#byeWeeks").innerHTML = myGames.map((g) => {
+      const o = tm(cur, g.opp), isDiv = o.div === myDiv, mo = outOf(myRid, g.week), oo = outOf(g.opp, g.week);
+      const mh = HIT[myRid][g.week], oh = HIT[g.opp][g.week], net = oh - mh;
+      const verdict = !mo.length && !oo.length ? `<span class="bw__v">No byes</span>` : Math.abs(net) < 2 ? `<span class="bw__v">Even</span>` : net > 0 ? `<span class="bw__v up">Edge: you ${sgn(net)}</span>` : `<span class="bw__v down">Edge: them ${sgn(-net)}</span>`;
+      const col = (label, ps, hit, best) => `<div class="bw__col"><p class="bw__k">${label} <b>${hit ? sgn(-hit) : "±0"}</b></p>${ps.length ? ps.map((p) => chip(p, best)).join("") : `<span class="bw__none">Nobody out</span>`}</div>`;
+      return `<div class="bw ${isDiv ? "is-div" : ""} ${!mo.length && !oo.length ? "is-quiet" : ""}">
+        <div class="bw__head"><span class="game__wk">Wk ${g.week}</span>${tname(o)}${isDiv ? `<span class="tag">Division</span>` : ""}${verdict}</div>
+        ${mo.length || oo.length ? `<div class="bw__body">${col("You", mo, mh, myBest)}${col(esc(o.name), oo, oh, fullLineup[g.opp].used)}</div>` : ""}
+      </div>`;
+    }).join("");
+
+    // sell candidates: cost of losing just this player in his bye week
+    const sells = mineR.filter((p) => p.bye > done && p.bye <= cur.regEnd && !p.ir && myBest.has(p.id)).map((p) => {
+      const solo = fullLineup[myRid].total - bestLineup(mineR.filter((x) => x.id !== p.id)).total;
+      const g = myGames.find((x) => x.week === p.bye);
+      return { p, solo, g };
+    }).sort((a, b) => b.solo - a.solo);
+    $("#sellList").innerHTML = sells.length ? `<div class="table-wrap"><table><thead><tr><th>Player</th><th class="n">Bye</th><th>That week</th><th class="n">Pts/gm</th><th class="n">Bye cost</th></tr></thead><tbody>${sells.map(({ p, solo, g }) => {
+      const o = g && tm(cur, g.opp);
+      return `<tr><td><b>${esc(p.name)}</b> <span class="asset__pos pos-${esc(p.pos)}">${esc(p.pos)} · ${esc(p.team)}</span></td><td class="n">Wk ${p.bye}</td><td>${o ? `${o.div === myDiv ? `<span class="tag">Div</span>` : ""}vs ${esc(o.name)}` : "–"}${g && HIT[myRid][g.week] > solo + 1 ? `<br><small class="muted">stacked: whole week ${sgn(-HIT[myRid][g.week])}</small>` : ""}</td><td class="n">${f1(p.ppg)}</td><td class="n"><b>${sgn(-solo)}</b></td></tr>`;
+    }).join("")}</tbody></table></div><p class="panel__note">Bye cost is what your best lineup loses in that one week after your bench fills in. Bigger number, bigger reason to move him.</p>` : `<p class="panel__note">None of your lineup players have a bye left.</p>`;
+
+    // buy targets: bye already used
+    const myFloor = {};
+    mineR.filter((p) => myBest.has(p.id)).forEach((p) => { myFloor[p.pos] = Math.min(myFloor[p.pos] ?? Infinity, p.ppg); });
+    const targets = cur.teams.filter((t) => t.rid !== myRid).flatMap((t) => roster(t.rid).filter((p) => p.bye && p.bye <= done && p.ppg > 0 && !p.ir && ["QB", "RB", "WR", "TE"].includes(p.pos)).map((p) => ({ p, t })))
+      .sort((a, b) => b.p.ppg - a.p.ppg);
+    const showBuy = (pos) => {
+      const rows = targets.filter((x) => pos === "All" || x.p.pos === pos).slice(0, 12);
+      $("#buyList").innerHTML = `<div class="table-wrap"><table><thead><tr><th>Player</th><th>Owner</th><th class="n">Bye</th><th class="n">Pts/gm</th></tr></thead><tbody>${rows.map(({ p, t }) => {
+        const up = p.ppg > (myFloor[p.pos] ?? 0);
+        return `<tr><td><b>${esc(p.name)}</b> <span class="asset__pos pos-${esc(p.pos)}">${esc(p.pos)} · ${esc(p.team)}</span>${up ? ` <span class="pt-tag pt-keeper">Upgrade</span>` : ""}</td><td>${esc(t.name)}${t.div === myDiv ? ` <span class="tag tag--ink">Div</span>` : ""}</td><td class="n">Wk ${p.bye} ✓</td><td class="n">${f1(p.ppg)}</td></tr>`;
+      }).join("") || `<tr><td colspan="4">Nobody fits.</td></tr>`}</tbody></table></div><p class="panel__note">"Upgrade" means he averages more than your weakest starter at that position. Trading with a division rival also weakens a team you're chasing.</p>`;
+    };
+    tabs($("#buyTabs"), ["All", "QB", "RB", "WR", "TE"], "All", showBuy); showBuy("All");
+    $("#byesLede").textContent += ` Byes are from the ${B.season} NFL schedule; rosters are as of the last data refresh.`;
+  })();
 
   // ---------- trades ----------
   const seasonOf = (yr) => D.seasons.find((s) => s.season === yr);

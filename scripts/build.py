@@ -11,9 +11,13 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 def get(path):
+    return get_url("https://api.sleeper.app/v1/" + path)
+
+
+def get_url(url):
     for attempt in range(4):
         try:
-            req = urllib.request.Request("https://api.sleeper.app/v1/" + path, headers={"User-Agent": "bbnf-site"})
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (bbnf-site)"})
             with urllib.request.urlopen(req, timeout=60) as r:
                 return json.load(r)
         except Exception:
@@ -256,6 +260,44 @@ def main():
                 "sides": list(sides.values()),
             })
     out["trades"].sort(key=lambda t: t["created"], reverse=True)
+
+    # ---------- bye weeks for current rosters ----------
+    cur_s = seasons[-1]
+    L = cur_s["league"]
+    out["byes"] = None
+    try:
+        nfl = get_url(f"https://api.sleeper.com/schedule/nfl/regular/{L['season']}")
+    except Exception as e:
+        print("no NFL schedule:", e)
+        nfl = []
+    if nfl:
+        weeks_by_team = {}
+        for g in nfl:
+            for tm_ in (g["home"], g["away"]):
+                weeks_by_team.setdefault(tm_, set()).add(g["week"])
+        last_wk = max(g["week"] for g in nfl)
+        bye_of = {tm_: next((w for w in range(1, last_wk + 1) if w not in ws), None) for tm_, ws in weeks_by_team.items()}
+        scored_thru = L["settings"].get("last_scored_leg", 0)
+        # season points / games for every player from league matchups
+        tot, gp = {}, {}
+        for w in range(1, scored_thru + 1):
+            for m in cur_s["matchups"].get(w) or []:
+                for pid, pts in (m.get("players_points") or {}).items():
+                    tot[pid] = tot.get(pid, 0) + (pts or 0)
+                    if pts: gp[pid] = gp.get(pid, 0) + 1
+        rosters = {}
+        for r in cur_s["rosters"]:
+            plist = []
+            for pid in r.get("players") or []:
+                info = pinfo(pid)
+                team = info["team"] if info["pos"] != "DEF" else pid
+                plist.append({**info, "bye": bye_of.get(team), "pts": round(tot.get(pid, 0), 2),
+                              "ppg": round(tot.get(pid, 0) / gp[pid], 2) if gp.get(pid) else 0,
+                              "starter": pid in (r.get("starters") or []), "ir": pid in (r.get("reserve") or [])})
+            rosters[str(r["roster_id"])] = sorted(plist, key=lambda p: -p["ppg"])
+        out["byes"] = {"season": L["season"], "nflWeek": max((g["week"] for g in nfl if g.get("status") == "complete"), default=0),
+                       "scoredThru": scored_thru, "slots": [p for p in L.get("roster_positions", []) if p not in ("BN", "IR")],
+                       "teamBye": bye_of, "rosters": rosters}
 
     os.makedirs(os.path.join(ROOT, "data"), exist_ok=True)
     with open(os.path.join(ROOT, "data", "site-data.js"), "w", encoding="utf-8") as f:

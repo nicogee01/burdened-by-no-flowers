@@ -322,3 +322,29 @@ tr.cut td { border-bottom: 2px dashed var(--line-2); }
   .game .pick3 button { padding: 8px 16px; }
   .ladder__row { grid-template-columns: 100px 1fr 48px; font-size: 14px; }
 }
+
+/* ================= BYE WATCH ================= */
+.byeweeks { display: grid; gap: 10px; }
+.bw { border: 1px solid var(--line); border-radius: 12px; background: var(--bg); overflow: hidden; }
+.bw.is-div { border-color: var(--ink); box-shadow: inset 4px 0 0 var(--accent); }
+.bw.is-quiet { opacity: 0.7; }
+.bw__head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; }
+.bw__head .tname { font-weight: 700; }
+.bw__v { margin-left: auto; font-family: var(--f-label); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+.bw__v.up { color: var(--ink); background: var(--gold-2); padding: 2px 8px; border-radius: 4px; }
+.bw__v.down { color: #fff; background: var(--accent); padding: 2px 8px; border-radius: 4px; }
+.bw__body { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.bw__col { padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 6px; align-content: flex-start; min-width: 0; }
+.bw__col + .bw__col { border-left: 1px solid var(--line); }
+.bw__k { width: 100%; margin: 0 0 2px; font-family: var(--f-label); font-weight: 700; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+.bw__k b { color: var(--accent); margin-left: 4px; }
+.bw__none { font-size: 14px; color: var(--faint); }
+.pchip { display: inline-flex; align-items: baseline; gap: 5px; padding: 4px 9px; border-radius: 999px; font-size: 14px; background: #e3d7bb; color: var(--muted); }
+.pchip span { font-family: var(--f-label); font-weight: 700; font-size: 12px; letter-spacing: 0.06em; }
+.pchip small { font-family: var(--f-label); font-weight: 700; opacity: 0.75; }
+.pchip.is-core { background: var(--ink); color: #fbf7ee; font-weight: 600; }
+.pchip.is-core span { color: var(--gold-2) !important; }
+.seg--sm { margin-bottom: 12px; }
+.seg--sm button { padding: 6px 12px; font-size: 14px; }
+.muted { color: var(--faint); }
+@media (max-width: 640px) { .bw__body { grid-template-columns: 1fr; } .bw__col + .bw__col { border-left: 0; border-top: 1px solid var(--line); } }

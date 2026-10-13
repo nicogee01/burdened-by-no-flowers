@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=1" />
+  <link rel="stylesheet" href="css/styles.css?v=2" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -22,6 +22,7 @@
         <a href="#case">The case file</a>
         <a href="#weeks">Week by week</a>
         <a href="#road">Road to the bye</a>
+        <a href="#byes">Bye weeks</a>
         <a href="#trades">Trade desk</a>
       </div>
     </div>
@@ -121,7 +122,7 @@
       <div class="section__head">
         <p class="eyebrow">The only way out</p>
         <h2 class="display" id="roadTitle">Road to the bye</h2>
-        <p class="lede" id="roadLede">Six teams make the playoffs. The two division winners get seeds 1–2 and a first-round bye; everyone else fights over four wild-card spots by record, with points for as the tiebreaker. The model below plays out the rest of the season 10,000 times, using each team's scoring so far, pulled toward the league average.</p>
+        <p class="lede" id="roadLede">Six teams make the playoffs. The two division winners get seeds 1–2 and a first-round bye; everyone else fights over four wild-card spots by record, with points for as the tiebreaker. The model below plays out the rest of the season 10,000 times, using each team's scoring so far, pulled toward the league average, then lowered in any week a team loses players to NFL byes (see Bye-week watch).</p>
       </div>
 
       <div class="odds" id="odds"></div>
@@ -158,8 +159,46 @@
       </article>
     </section>
 
+    <!-- ===== BYES ===== -->
+    <section class="section section--band" id="byes" aria-labelledby="byesTitle">
+      <div class="section__head">
+        <p class="eyebrow">Plan the lineup, plan the trade</p>
+        <h2 class="display" id="byesTitle">Bye-week watch</h2>
+        <p class="lede" id="byesLede">Each team's "bye hit" is how many points its best possible lineup loses that week, using every player's points per game (games played only), after bench players fill in. It counts depth, so a bye you can cover barely registers. The playoff odds above already include these hits.</p>
+      </div>
+      <div class="cards" id="byeCards"></div>
+      <article class="panel" style="margin-top:16px">
+        <header class="panel__head">
+          <h3>Your remaining schedule, bye by bye</h3>
+          <div class="legend">
+            <span><i class="sw sw--me"></i>In your best lineup</span>
+            <span><i class="sw sw--oppw"></i>Bench depth</span>
+            <span><span class="tag">Division</span>Division game</span>
+          </div>
+        </header>
+        <div class="byeweeks" id="byeWeeks"></div>
+      </article>
+      <div class="two">
+        <article class="panel">
+          <header class="panel__head">
+            <h3>Sell candidates</h3>
+            <p class="panel__sub">Your players whose bye still costs you points, ranked by that cost</p>
+          </header>
+          <div id="sellList"></div>
+        </article>
+        <article class="panel">
+          <header class="panel__head">
+            <h3>Buy targets: bye already used</h3>
+            <p class="panel__sub">Productive players on other rosters whose bye is behind them. They'll play every remaining week.</p>
+          </header>
+          <div class="seg seg--sm" role="tablist" aria-label="Position" id="buyTabs"></div>
+          <div id="buyList"></div>
+        </article>
+      </div>
+    </section>
+
     <!-- ===== TRADES ===== -->
-    <section class="section section--band" id="trades" aria-labelledby="tradesTitle">
+    <section class="section" id="trades" aria-labelledby="tradesTitle">
       <div class="section__head">
         <p class="eyebrow">Deadline day, every day</p>
         <h2 class="display" id="tradesTitle">The trade desk</h2>
@@ -187,7 +226,7 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=1"></script>
-  <script src="js/app.js?v=1"></script>
+  <script src="data/site-data.js?v=2"></script>
+  <script src="js/app.js?v=2"></script>
 </body>
 </html>
