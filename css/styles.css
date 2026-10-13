@@ -348,3 +348,6 @@ tr.cut td { border-bottom: 2px dashed var(--line-2); }
 .seg--sm button { padding: 6px 12px; font-size: 14px; }
 .muted { color: var(--faint); }
 @media (max-width: 640px) { .bw__body { grid-template-columns: 1fr; } .bw__col + .bw__col { border-left: 0; border-top: 1px solid var(--line); } }
+.swap--cols { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
+.swap--cols .delta { white-space: nowrap; color: var(--muted); }
+.swap li { grid-template-columns: minmax(0, 1fr) auto auto; }

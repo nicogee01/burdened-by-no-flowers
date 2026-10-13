@@ -187,6 +187,16 @@
     }).join("");
     const st = S[s.season];
     $("#swapNote").innerHTML = `<b>${st.swapBetter} of 9</b> other schedules would give you a better record than the one you got.`;
+
+    // reverse: every team playing MY schedule (swap[a][me] = team a with my schedule)
+    const rev = s.teams.map((t) => ({ t, r: s.swap[t.rid][s.myRid] })).sort((a, b) => b.r[0] - a.r[0] || a.r[1] - b.r[1]);
+    $("#swapRev").innerHTML = rev.map(({ t, r }) => {
+      const isMe = t.rid === s.myRid, d = r[0] - t.w;
+      return `<li class="${isMe ? "is-me" : ""}">${tname(t)}<span class="rec">${r[0]}–${r[1]}</span><span class="delta">${isMe ? "Your actual" : `real ${t.w}–${t.l}${d ? ` · ${d > 0 ? "+" : "−"}${Math.abs(d)}` : ""}`}</span></li>`;
+    }).join("");
+    const others = rev.filter((x) => x.t.rid !== s.myRid), worse = others.filter((x) => x.r[0] < x.t.w).length;
+    const avgW = others.reduce((a, x) => a + x.r[0], 0) / others.length, avgReal = others.reduce((a, x) => a + x.t.w, 0) / others.length;
+    $("#swapRevNote").innerHTML = `With your schedule, <b>${worse} of 9</b> teams would have fewer wins than they actually have. On average they'd win <b>${f1(avgW)}</b> games instead of ${f1(avgReal)}.`;
   }
 
   function luckTable(s) {
