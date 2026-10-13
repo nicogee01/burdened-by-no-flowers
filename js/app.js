@@ -232,11 +232,12 @@
     const pool = players.filter((p) => !p.ir).sort((a, b) => b.ppg - a.ppg), used = new Set();
     let total = 0;
     const take = (ok) => { const p = pool.find((x) => !used.has(x.id) && ok.includes(x.pos)); if (p) { used.add(p.id); total += p.ppg; } };
-    B.slots.filter((s) => !FLEX_OK[s]).forEach((s) => take([s]));
+    B.slots.filter((s) => !FLEX_OK[s] && !SKIP.includes(s)).forEach((s) => take([s]));
     B.slots.filter((s) => FLEX_OK[s]).forEach((s) => take(FLEX_OK[s]));
     return { total, used };
   }
-  const roster = (rid) => (B ? B.rosters[rid] || [] : []);
+  const SKIP = ["K", "DEF"]; // kickers and defenses are streamed, so leave them out of bye analysis
+  const roster = (rid) => (B ? (B.rosters[rid] || []).filter((p) => !SKIP.includes(p.pos)) : []);
   const fullLineup = B ? Object.fromEntries(cur.teams.map((t) => [t.rid, bestLineup(roster(t.rid))])) : {};
   const byeHit = (rid, wk) => {
     if (!B) return 0;
