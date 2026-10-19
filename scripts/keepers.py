@@ -158,6 +158,46 @@ def build(seasons, players, me, pinfo):
              for i, r in enumerate(rounds)]
     ev = {c["round"]: c["ev"] for c in curve}
 
+    teams = len(next(x for x in seasons if x["league"]["season"] == cur)["rosters"])
+    n_picks = cur_rounds * teams
+    by_pick = {}
+    for row in pick_rows:
+        if row["partial"] or row["keeper"]:
+            continue
+        by_pick.setdefault(min(row["pick"], n_picks), []).append(max(row["war"], 0))
+    raw_p = [statistics.mean(by_pick[i]) if by_pick.get(i) else None for i in range(1, n_picks + 1)]
+    half = 6  # +/- 6 picks: about a round's worth of neighbours
+    sm = []
+    for i in range(n_picks):
+        vals, wts = [], []
+        for j in range(max(0, i - half), min(n_picks, i + half + 1)):
+            for v in by_pick.get(j + 1, []):
+                vals.append(v)
+        sm.append(statistics.mean(vals) if vals else 0)
+    cnt_p = [max(len(by_pick.get(i + 1, [])), 1) for i in range(n_picks)]
+    pick_curve = [round(v, 3) for v in pava_decreasing(sm, cnt_p)]
+
+    # draft surplus by position: did players at each position beat the value of the pick used on them?
+    pos_draft = []
+    for pos in POS:
+        for lo, hi in [(1, 3), (4, 6), (7, 10), (11, 16)]:
+            v = [max(r["war"], 0) - pick_curve[min(r["pick"], n_picks) - 1] for r in pick_rows
+                 if r["pos"] == pos and not r["partial"] and not r["keeper"] and lo <= min(r["round"], cur_rounds) <= hi]
+            pos_draft.append({"pos": pos, "band": f"{lo}-{hi}", "n": len(v), "surplus": round(statistics.mean(v), 3) if v else None})
+    share = {}
+    for pos in POS:
+        early = [r for r in pick_rows if not r["keeper"] and r["round"] <= 3]
+        share[pos] = round(sum(1 for r in early if r["pos"] == pos) / len(early), 3) if early else 0
+
+    # draft order history: slot by roster per season
+    slots = {}
+    for s_ in seasons:
+        y = s_["league"]["season"]
+        rid_by_owner = {r["owner_id"]: r["roster_id"] for r in s_["rosters"]}
+        for dr in s_["drafts"]:
+            if dr.get("draft_order"):
+                slots[y] = {str(rid_by_owner.get(u)): sl for u, sl in dr["draft_order"].items() if rid_by_owner.get(u)}
+
     def value_round(w):
         for c in curve:
             if c["ev"] <= w:
@@ -285,7 +325,10 @@ def build(seasons, players, me, pinfo):
             else:
                 cost = cur_rounds; via = "free agent"
             pr = project(pid)
+            info = players.get(str(pid)) or {}
             rows.append({**pinfo(pid), "pos": pos, "cost": cost, "via": via,
+                         "exp": info.get("years_exp"), "depth": info.get("depth_chart_order"),
+                         "injury": info.get("injury_status"),
                          "draftRound": dp["round"] if dp else None, "wasKeeper": bool(dp and dp.get("is_keeper")),
                          **pr, "ev": ev.get(cost, 0), "surplus": round(pr["proj"] - ev.get(cost, 0), 2),
                          "valueRound": value_round(pr["proj"])})
@@ -334,5 +377,7 @@ def build(seasons, players, me, pinfo):
         "curve": curve, "picks": pick_rows, "history": history, "boards": boards,
         "position": position, "stability": stab, "bands": band_rows,
         "backtest": backtest, "keeperTrades": keeper_trades, "hitLine": HIT,
+        "teams": teams, "pickCurve": pick_curve, "posDraft": pos_draft, "earlyShare": share, "slots": slots,
+        "repl": {pos: round(statistics.mean(tabs[y]["repl"][pos] for y in complete), 2) if complete else 0 for pos in POS},
         "alt": {"watson2026": alt("8167", cur, cur_rounds) if "8167" in players else None},
     }

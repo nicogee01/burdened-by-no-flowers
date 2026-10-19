@@ -595,7 +595,7 @@
     $("#homeTiles").innerHTML = tiles.map(([p, n, t, stat, d]) => `<a class="tile reveal" href="#/${p}"><span class="tile__n">${n}</span><span class="tile__t">${t}</span><span class="tile__stat">${esc(stat)}</span><span class="tile__d">${d}</span><span class="tile__go" aria-hidden="true">→</span></a>`).join("");
   })();
 
-  window.BBNF = { D, $, esc, f1, f0, sgn, pct, ord, tm, tname, avatar, tabs, observe, cur };
+  window.BBNF = { D, $, esc, f1, f0, sgn, pct, ord, tm, tname, avatar, tabs, observe, cur, odds: typeof base !== "undefined" ? base.acc : null };
   route();
   observe();
 })();
