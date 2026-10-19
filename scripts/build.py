@@ -5,6 +5,9 @@ Runs weekly from .github/workflows/refresh.yml.
 """
 import json, os, statistics, sys, time, urllib.request
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import keepers  # noqa: E402
+
 LEAGUE_ID = "1367213857868627968"
 ME = "1169397187500027904"  # nicog01
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -298,6 +301,8 @@ def main():
         out["byes"] = {"season": L["season"], "nflWeek": max((g["week"] for g in nfl if g.get("status") == "complete"), default=0),
                        "scoredThru": scored_thru, "slots": [p for p in L.get("roster_positions", []) if p not in ("BN", "IR")],
                        "teamBye": bye_of, "rosters": rosters}
+
+    out["keepers"] = keepers.build(seasons, players, ME, pinfo)
 
     os.makedirs(os.path.join(ROOT, "data"), exist_ok=True)
     with open(os.path.join(ROOT, "data", "site-data.js"), "w", encoding="utf-8") as f:

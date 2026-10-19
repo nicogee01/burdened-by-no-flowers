@@ -36,8 +36,32 @@
 
   // ---------- nav ----------
   const nav = $("#nav");
-  const onScroll = () => nav.classList.toggle("is-solid", window.scrollY > 40);
-  window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+  let page = "home";
+  const onScroll = () => nav.classList.toggle("is-solid", page !== "home" || window.scrollY > 40);
+  window.addEventListener("scroll", onScroll, { passive: true });
+
+  // ---------- tabs: #/page or #/page/anchor ----------
+  const PAGES = ["home", "luck", "race", "trades", "keepers"];
+  const LEGACY = { case: "luck", weeks: "luck", pace: "luck", road: "race", byes: "race", trades: "trades", top: "home" };
+  function route() {
+    const h = location.hash.replace(/^#\/?/, "");
+    let [p, anchor] = h.split("/");
+    if (LEGACY[p]) { anchor = p; p = LEGACY[p]; }
+    if (!PAGES.includes(p)) p = "home";
+    const changed = p !== page;
+    page = p;
+    document.querySelectorAll(".page").forEach((el) => (el.hidden = el.dataset.page !== p));
+    document.querySelectorAll("#navLinks a").forEach((a) => (a.dataset.tab === p ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
+    document.title = p === "home" ? "Burdened by No Flowers" : `${document.querySelector(`#navLinks a[data-tab="${p}"]`).firstChild.textContent.trim()} · Burdened by No Flowers`;
+    onScroll();
+    const target = anchor && document.getElementById(anchor);
+    if (target) requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
+    else if (changed) window.scrollTo(0, 0);
+    if (changed) { const h1 = document.querySelector(`.page[data-page="${p}"] h1`); if (h1) { h1.tabIndex = -1; h1.focus({ preventScroll: true }); } }
+    document.dispatchEvent(new CustomEvent("pagechange", { detail: p }));
+    requestAnimationFrame(() => observe());
+  }
+  window.addEventListener("hashchange", route);
 
   // ---------- derived luck stats ----------
   function seasonStats(s) {
@@ -557,5 +581,21 @@
 
   $("#footMeta").textContent = `Data from the Sleeper API, last refreshed ${new Date(D.generated).toLocaleString()}. League ${cur.leagueId}.`;
 
+  // ---------- home tiles ----------
+  (function homeTiles() {
+    const K = D.keepers, b = K && K.boards[String(cur.myRid)];
+    const a = typeof base !== "undefined" ? base.acc[cur.myRid] : null;
+    const top = b ? b.filter((r) => r.surplus > 0).slice(0, 3).map((r) => r.name.split(" ").slice(-1)[0]).join(", ") : "";
+    const tiles = [
+      ["luck", "01", "Bad luck", `${C.m.w}–${C.m.l} vs. ${f1(C.m.xw)} expected wins`, "All-play, the heater effect, schedule swaps and the points-against pace."],
+      ["race", "02", "Playoff race", a ? `${pct(a.po)} playoffs · ${pct(a.div)} bye` : "Season complete", "10,000 simulations, your what-if calls, and every bye week left."],
+      ["trades", "03", "Trades", `${D.trades.filter((t) => t.mine).length} deals traced`, "Every deal scored, every traded pick traced to the player it became."],
+      ["keepers", "04", "Keeper Lab", top ? `Model's ${K.next} keepers: ${top}` : "Keeper value report", "Wins above replacement, what each round is worth, studs vs. steals, RB vs. WR."],
+    ];
+    $("#homeTiles").innerHTML = tiles.map(([p, n, t, stat, d]) => `<a class="tile reveal" href="#/${p}"><span class="tile__n">${n}</span><span class="tile__t">${t}</span><span class="tile__stat">${esc(stat)}</span><span class="tile__d">${d}</span><span class="tile__go" aria-hidden="true">→</span></a>`).join("");
+  })();
+
+  window.BBNF = { D, $, esc, f1, f0, sgn, pct, ord, tm, tname, avatar, tabs, observe, cur };
+  route();
   observe();
 })();

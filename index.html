@@ -10,24 +10,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=5" />
+  <link rel="stylesheet" href="css/styles.css?v=6" />
+  <link rel="stylesheet" href="css/lab.css?v=6" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <nav class="nav" id="nav" aria-label="Sections">
+  <nav class="nav" id="nav" aria-label="Site">
     <div class="nav__inner">
-      <a class="brand" href="#top"><span class="brand__word">Burdened<em>by No Flowers</em></span></a>
-      <div class="nav__links">
-        <a href="#case">The case file</a>
-        <a href="#weeks">Week by week</a>
-        <a href="#road">Road to the bye</a>
-        <a href="#byes">Bye weeks</a>
-        <a href="#trades">Trade desk</a>
+      <a class="brand" href="#/home"><span class="brand__word">Burdened<em>by No Flowers</em></span></a>
+      <div class="nav__links" id="navLinks">
+        <a href="#/home" data-tab="home">Home</a>
+        <a href="#/luck" data-tab="luck">Bad luck</a>
+        <a href="#/race" data-tab="race">Playoff race</a>
+        <a href="#/trades" data-tab="trades">Trades</a>
+        <a href="#/keepers" data-tab="keepers">Keeper Lab <span class="nav__new">New</span></a>
       </div>
     </div>
   </nav>
 
+  <main id="main">
+  <div class="page" data-page="home">
   <!-- ===== HERO ===== -->
   <header class="hero" id="top">
     <div class="hero__grain" aria-hidden="true"></div>
@@ -39,8 +42,8 @@
       </h1>
       <p class="hero__sub" id="heroSub">The official programme of a team that keeps doing everything right and losing anyway.</p>
       <div class="hero__ctas">
-        <a class="cta" href="#case"><span class="cta__label">Read the evidence →</span><span class="cta__hint">Luck, quantified</span></a>
-        <a class="cta" href="#road"><span class="cta__label">Find the bye →</span><span class="cta__hint">Playoff odds &amp; what-ifs</span></a>
+        <a class="cta" href="#/luck"><span class="cta__label">Read the evidence →</span><span class="cta__hint">Luck, quantified</span></a>
+        <a class="cta" href="#/keepers"><span class="cta__label">Plan 2027 keepers →</span><span class="cta__hint">Keeper Lab: value vs. wins</span></a>
       </div>
     </div>
     <aside class="hero__scoreboard" aria-label="Season snapshot">
@@ -55,7 +58,17 @@
     <div class="ticker__viewport"><div class="ticker__track" id="ticker"></div></div>
   </div>
 
-  <main id="main">
+    <section class="section" aria-labelledby="homeTitle">
+      <div class="section__head">
+        <p class="eyebrow">The programme</p>
+        <h2 class="display" id="homeTitle">Pick your poison</h2>
+      </div>
+      <nav class="home-tiles" id="homeTiles" aria-label="Sections"></nav>
+    </section>
+  </div>
+
+  <div class="page" data-page="luck" hidden>
+    <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 1 · The evidence</p><h1 class="page-hero__title">Bad <em>luck</em></h1><p class="page-hero__sub">All-play records, the heater effect, schedule swaps and the points-against pace.</p></div></header>
     <!-- ===== CASE FILE ===== -->
     <section class="section" id="case" aria-labelledby="caseTitle">
       <div class="section__head">
@@ -144,7 +157,10 @@
         <div id="luckTable"></div>
       </article>
     </section>
+  </div>
 
+  <div class="page" data-page="race" hidden>
+    <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 2 · The only way out</p><h1 class="page-hero__title">Playoff <em>race</em></h1><p class="page-hero__sub">Simulated odds, the division path to a bye, and every bye week left on the schedule.</p></div></header>
     <!-- ===== ROAD TO THE BYE ===== -->
     <section class="section" id="road" aria-labelledby="roadTitle">
       <div class="section__head">
@@ -224,12 +240,14 @@
         </article>
       </div>
     </section>
+  </div>
 
+  <div class="page" data-page="trades" hidden>
+    <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 3 · Deadline day, every day</p><h1 class="page-hero__title">The trade <em>desk</em></h1><p class="page-hero__sub">Every deal, scored by what it produced. Every traded pick, traced to the player it became.</p></div></header>
     <!-- ===== TRADES ===== -->
     <section class="section" id="trades" aria-labelledby="tradesTitle">
       <div class="section__head">
-        <p class="eyebrow">Deadline day, every day</p>
-        <h2 class="display" id="tradesTitle">The trade desk</h2>
+        <h2 class="display" id="tradesTitle">The ledger</h2>
         <p class="lede">Each trade is scored by the fantasy points its pieces put up <em>as starters</em> for the team that got them, from the trade onward. Traded draft picks are traced to the player they turned into, and to that player's points.</p>
       </div>
       <div class="trade-stats" id="tradeStats"></div>
@@ -244,8 +262,124 @@
         <div class="seg" role="tablist" aria-label="Trade season" id="tradeTabs"></div>
       </div>
       <div class="trades trades--compact" id="leagueTrades"></div>
+      <p class="panel__note" style="margin-top:24px">Preseason pick-for-keeper deals, including James Cook, are broken down in the <a href="#/keepers/k-trades">Keeper Lab</a>.</p>
     </section>
+  </div>
+
+  <!-- ===== KEEPER LAB ===== -->
+  <div class="page" data-page="keepers" hidden>
+    <header class="page-hero page-hero--lab"><div class="page-hero__in">
+      <p class="eyebrow">Tab 4 · Report</p>
+      <h1 class="page-hero__title">Keeper <em>Lab</em></h1>
+      <p class="page-hero__sub" id="labSub">What is a keeper actually worth in wins, and what does it cost you at the draft?</p>
+      <nav class="lab-toc" aria-label="Report sections">
+        <a href="#/keepers/k-board">Your board</a><a href="#/keepers/k-calc">Upside calculator</a><a href="#/keepers/k-curve">Pick value</a><a href="#/keepers/k-history">Studs vs. steals</a><a href="#/keepers/k-pos">RB vs. WR</a><a href="#/keepers/k-trades">Keeper trades</a><a href="#/keepers/k-method">Method</a>
+      </nav>
+    </div></header>
+
+    <section class="section" id="k-summary" aria-labelledby="kSumTitle">
+      <div class="section__head">
+        <p class="eyebrow">The short version</p>
+        <h2 class="display" id="kSumTitle">Key findings</h2>
+      </div>
+      <div class="findings" id="labFindings"></div>
+    </section>
+
+    <section class="section section--band" id="k-board" aria-labelledby="kBoardTitle">
+      <div class="section__head section__head--row">
+        <div>
+          <p class="eyebrow">01 · Plan ahead</p>
+          <h2 class="display" id="kBoardTitle">Your keeper board</h2>
+        </div>
+        <label class="select"><span>Team</span><select id="boardTeam"></select></label>
+      </div>
+      <p class="lede" id="boardLede" style="margin-bottom:24px"></p>
+      <div class="topthree" id="boardTop"></div>
+      <article class="panel panel--flush"><div class="table-wrap" id="boardTable"></div></article>
+    </section>
+
+    <section class="section" id="k-calc" aria-labelledby="kCalcTitle">
+      <div class="section__head">
+        <p class="eyebrow">02 · Lottery tickets</p>
+        <h2 class="display" id="kCalcTitle">The upside calculator</h2>
+        <p class="lede">A late-round keeper costs almost nothing, so a cheap young player only has to hit to beat a star. Pick a player, set the points per game you think he'll average next year, and see whether he beats your third-best keeper.</p>
+      </div>
+      <div class="calc" id="calc"></div>
+    </section>
+
+    <section class="section section--band" id="k-curve" aria-labelledby="kCurveTitle">
+      <div class="section__head">
+        <p class="eyebrow">03 · The price tag</p>
+        <h2 class="display" id="kCurveTitle">What a draft pick is worth</h2>
+        <p class="lede" id="curveLede"></p>
+      </div>
+      <div class="two two--even">
+        <article class="panel">
+          <header class="panel__head"><h3>Wins above replacement per pick, by round</h3><p class="panel__sub">Bars: raw average in that round. Line: the smoothed curve the model uses as each pick's price.</p></header>
+          <div id="curveChart"></div>
+        </article>
+        <article class="panel">
+          <header class="panel__head"><h3>Hit rate by round</h3><p class="panel__sub" id="hitSub"></p></header>
+          <div id="hitChart"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="k-history" aria-labelledby="kHistTitle">
+      <div class="section__head">
+        <p class="eyebrow">04 · Keep the stud or the steal?</p>
+        <h2 class="display" id="kHistTitle">Studs vs. steals</h2>
+        <p class="lede" id="histLede"></p>
+      </div>
+      <div class="cards" id="histCards"></div>
+      <article class="panel" style="margin-top:16px">
+        <header class="panel__head"><h3>Every keeper since 2025: what he produced vs. what he cost</h3>
+          <div class="legend"><span><i class="sw sw--dot"></i>Full season</span><span><i class="sw sw--ring"></i>2026, on pace</span><span><i class="sw sw--med"></i>Value of the pick given up</span></div>
+        </header>
+        <div class="chart" id="histChart"></div>
+        <p class="panel__note">Above the gold line: the keeper beat the pick he cost. Hover or focus a dot for details.</p>
+      </article>
+      <div class="two">
+        <article class="panel"><header class="panel__head"><h3>Keeper surplus by manager</h3><p class="panel__sub">Wins above the value of the picks spent: 2025 final plus 2026 on pace</p></header><div id="mgrTable"></div></article>
+        <article class="panel case" id="goblinCase"></article>
+      </div>
+      <details class="panel panel--flush disclose"><summary>Every keeper, sortable table</summary><div class="table-wrap" id="histTable"></div></details>
+    </section>
+
+    <section class="section section--band" id="k-pos" aria-labelledby="kPosTitle">
+      <div class="section__head">
+        <p class="eyebrow">05 · Two flex spots</p>
+        <h2 class="display" id="kPosTitle">Running backs vs. receivers</h2>
+        <p class="lede" id="posLede"></p>
+      </div>
+      <div class="two two--even">
+        <article class="panel"><header class="panel__head"><h3>Points per game by positional rank</h3><p class="panel__sub" id="dropSub"></p></header>
+          <div class="legend"><span><i class="sw sw--rb"></i>RB</span><span><i class="sw sw--wr"></i>WR</span><span><i class="sw sw--repl"></i>Replacement level</span></div>
+          <div id="dropChart"></div></article>
+        <article class="panel"><header class="panel__head"><h3>Replacement level and stability</h3><p class="panel__sub">Replacement is what's on waivers. Stability is how well one season's value predicts the next (correlation, −1 to 1).</p></header><div id="posTable"></div></article>
+      </div>
+      <article class="panel"><header class="panel__head"><h3>Wins above replacement by position and draft round</h3><p class="panel__sub">Non-keeper picks from completed seasons. A hit is half a win or more.</p></header><div id="bandTable"></div></article>
+    </section>
+
+    <section class="section" id="k-trades" aria-labelledby="kTradesTitle">
+      <div class="section__head">
+        <p class="eyebrow">06 · Picks for keepers</p>
+        <h2 class="display" id="kTradesTitle">Keeper trades</h2>
+        <p class="lede">Before the draft you can trade picks for someone else's keeper. The buyer pays twice: the picks they send, and the round they spend keeping him. The fair price is the pick whose expected value matches the keeper's surplus.</p>
+      </div>
+      <div class="ktrades" id="keeperTrades"></div>
+    </section>
+
+    <section class="section section--band" id="k-method" aria-labelledby="kMethodTitle">
+      <div class="section__head">
+        <p class="eyebrow">07 · Show your work</p>
+        <h2 class="display" id="kMethodTitle">Method &amp; caveats</h2>
+      </div>
+      <div class="method" id="method"></div>
+    </section>
+  </div>
   </main>
+
 
   <footer class="footer">
     <p class="footer__word">Burdened <em>by No Flowers</em></p>
@@ -254,7 +388,8 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=5"></script>
-  <script src="js/app.js?v=5"></script>
+  <script src="data/site-data.js?v=6"></script>
+  <script src="js/app.js?v=6"></script>
+  <script src="js/keepers.js?v=6"></script>
 </body>
 </html>
