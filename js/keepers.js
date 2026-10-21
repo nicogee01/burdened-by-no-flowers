@@ -479,20 +479,30 @@
 
   // ================= hindsight keepers =================
   const HS = K.hindsight || [];
-  let hindYear = HS.length ? HS[HS.length - 1].season : null;
+  // default to the latest completed season: a full year is a far better sample than one in progress
+  const hsYears = [...new Set(HS.map((h) => h.season))];
+  let hindYear = hsYears.filter((y) => K.complete.includes(y)).pop() || hsYears[hsYears.length - 1] || null;
   function hindsight() {
     if (!HS.length) { $("#k-hind").hidden = true; return; }
     const tabsEl = $("#hindTabs");
-    if (!tabsEl.children.length) B.tabs(tabsEl, [...new Set(HS.map((h) => h.season))], hindYear, (v) => { hindYear = v; hindsight(); B.observe(); });
+    if (!tabsEl.children.length) {
+      B.tabs(tabsEl, hsYears, hindYear, (v) => { hindYear = v; hindsight(); B.observe(); });
+      tabsEl.querySelectorAll("button").forEach((b) => { if (!K.complete.includes(b.dataset.v)) b.textContent = `${b.dataset.v} · in progress`; });
+    }
     const rows = HS.filter((h) => h.season === hindYear).sort((a, b) => a.gap - b.gap);
     const partial = rows[0] && rows[0].partial;
     const avgGap = rows.reduce((a, h) => a + h.gap, 0) / rows.length;
     const mine = rows.find((h) => String(h.rid) === ME);
-    $("#hindLede").innerHTML = `Using what actually happened in ${hindYear}${partial ? ` (on pace after ${K.position[hindYear].weeks} weeks, so this will keep moving)` : ""}, here are the three keepers each team <i>should</i> have kept from its roster at the end of ${+hindYear - 1}, priced with the league's keeper rules, next to the three it did keep. The average team left <b>${f2(avgGap)} wins</b> on the table.${mine ? ` You left <b>${f2(mine.gap)}</b>.` : ""} Players added in preseason trades aren't counted, because they weren't on the roster yet. If a team had traded away the pick in a keeper's round, he moves up to the nearest earlier round it still owned, same as the league rule. And if a player actually went <i>later</i> in that draft than the team's pick in his keeper round, he doesn't count, because the team could have just drafted him. That's this league's real ADP.`;
+    const rules = (rows[0] && rows[0].rules) || { shrink: 4, minGames: 8, minScore: 0.1 };
+    $("#hindLede").innerHTML = `${partial ? `<b>${hindYear} is still being played</b> (${K.position[hindYear].weeks} weeks), so treat this tab as a preview. Hot streaks, like a backup filling in for an injured starter, will fade. ` : ""}For each team: the three keepers it <i>should</i> have kept from its end-of-${+hindYear - 1} roster, next to the three it did keep. The average team left <b>${f2(avgGap)} wins</b> on the table.${mine ? ` You left <b>${f2(mine.gap)}</b>.` : ""}`;
+    $("#hindHow").innerHTML = `
+      <div><h3>Draft value</h3><p>What his draft slot was worth minus the pick spent to keep him. The draft slot is where he actually went in the ${hindYear} draft or, for players who were kept, an estimate from the season before. Keeping Brock Bowers in round 10 when he'd go around pick 13 scores big here, however the season goes.</p></div>
+      <div><h3>Outcome</h3><p>Points per game above replacement, stretched to a full season so missed games don't sink a star, minus the pick spent. Small samples are pulled toward waiver level (+${rules.shrink} replacement games), and fewer than ${rules.minGames} games earns only partial credit, so a short hot streak can't carry a keeper.</p></div>
+      <div><h3>Keeper score</h3><p>The average of the two. To count as a "should have kept", a player needs at least +${f2(rules.minScore)} and has to pass the league's rules. If the pick was traded away he moves up a round. If he went <i>later</i> in the draft than your pick in his round, you could have just drafted him, so he doesn't count.</p></div>`;
     $("#hindSub").textContent = `${hindYear}: best possible keeper surplus minus actual. Sorted from best keeper to worst.`;
     const mx = Math.max(0.5, ...rows.map((h) => h.gap));
     $("#hindBoard").innerHTML = `<div class="luck">${rows.map((h) => `<div class="luck__row ${String(h.rid) === ME ? "is-me" : ""}">${tname(team(h.rid))}<div class="luck__track luck__track--left"><div class="luck__bar neg" style="width:${(h.gap / mx) * 100}%;left:0;right:auto"></div></div><span class="luck__v">${f2(h.gap)}</span></div>`).join("")}</div><p class="howto">Shorter bar = closer to the perfect three. Nobody can see the future, so the useful lesson is the kind of player teams missed: cheap late-round and waiver players who broke out.</p>`;
-    const line = (x, kept) => `<li class="${kept ? "is-kept" : ""}"><span class="${posCls(x.pos)}">${esc(x.pos)}</span><b>${esc(x.name)}</b><small>rd ${x.cost}${x.ruleCost && x.ruleCost !== x.cost ? ` (rd ${x.ruleCost} ${x.cost < x.ruleCost ? "pick was traded" : "taken"})` : ""} · ${f2(x.war)} WAR</small><span class="hind__s ${x.surplus >= 0 ? "up" : "down"}">${sgn(x.surplus, 2)}</span></li>`;
+    const line = (x, kept) => `<li class="${kept ? "is-kept" : ""}" tabindex="0" data-tip="${esc(`<b>${x.name}</b><br>Kept with pick ${x.costPick} (round ${x.cost}), worth ${f2(x.evCost)}<br>Draft slot #${x.adp} (${x.adpSrc === "draft" ? "where he went" : "estimated"}): draft value ${sgn(x.draftVal, 2)}<br>Outcome ${f2(x.outcome)} WAR per full season, ${x.g} games: ${sgn(x.outcomeVal, 2)}<br>Keeper score ${sgn(x.score, 2)}`)}"><span class="${posCls(x.pos)}">${esc(x.pos)}</span><b>${esc(x.name)}</b><small>rd ${x.cost}${x.ruleCost && x.ruleCost !== x.cost ? ` (rd ${x.ruleCost} ${x.cost < x.ruleCost ? "pick was traded" : "taken"})` : ""} · draft ${sgn(x.draftVal, 2)} · outcome ${sgn(x.outcomeVal, 2)} · ${x.g} gm</small><span class="hind__s ${x.score >= 0 ? "up" : "down"}">${sgn(x.score, 2)}</span></li>`;
     const order = [...rows].sort((a, b) => (String(b.rid) === ME) - (String(a.rid) === ME) || b.gap - a.gap);
     $("#hindCards").innerHTML = order.map((h) => {
       const keptIds = new Set(h.actual.map((x) => String(x.pid))), bestIds = new Set(h.best.map((x) => String(x.pid)));
@@ -501,10 +511,10 @@
         <header>${tname(team(h.rid))}<span class="hindcard__gap ${h.gap < 0.05 ? "ok" : ""}">${h.gap < 0 ? "Beat it (traded for a keeper)" : h.gap < 0.05 ? "Nailed it" : `−${f2(h.gap)} wins`}</span></header>
         <div class="hindcard__cols">
           <div><p class="bw__k">Actually kept · ${sgn(h.actualTotal, 2)}</p><ol>${h.actual.length ? h.actual.map((x) => line(x, bestIds.has(String(x.pid)))).join("") : `<li class="muted">Nobody</li>`}</ol></div>
-          <div><p class="bw__k">Hindsight best · ${sgn(h.bestTotal, 2)}</p><ol>${h.best.length ? h.best.map((x) => line(x, keptIds.has(String(x.pid)))).join("") : `<li class="muted">Nobody beat his pick</li>`}</ol></div>
+          <div><p class="bw__k">Hindsight best · ${sgn(h.bestTotal, 2)}</p><ol>${h.best.length ? h.best.map((x) => line(x, keptIds.has(String(x.pid)))).join("") : `<li class="muted">Nobody was worth a slot</li>`}${h.best.length && h.best.length < K.maxKeepers ? `<li class="muted">Nobody else cleared +${f2((h.rules || {}).minScore || 0.1)}</li>` : ""}</ol></div>
         </div>
         ${h.redraft && h.redraft.length ? `<p class="hindcard__note">Not worth keeping because they'd still be there: ${h.redraft.map((x) => `<b>${esc(x.name)}</b> (went #${x.adp}, their round-${x.cost} pick was #${x.teamPick})`).join(", ")}.</p>` : ""}
-        ${miss ? `<p class="hindcard__note">Biggest miss: <b>${esc(miss.name)}</b>, available for a round-${miss.cost} pick and worth ${sgn(miss.surplus, 2)} wins over it${h.partial ? " on pace" : ""}.</p>` : ""}
+        ${miss ? `<p class="hindcard__note">Biggest miss: <b>${esc(miss.name)}</b>, a round-${miss.cost} keep with a draft slot around pick ${miss.adp}. Keeper score ${sgn(miss.score, 2)}${h.partial ? " so far" : ""}.</p>` : ""}
       </article>`;
     }).join("");
   }

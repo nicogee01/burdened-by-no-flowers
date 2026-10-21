@@ -118,3 +118,10 @@ td.shake { animation: shake 0.35s; }
 .hindcard__note b { color: var(--text); }
 
 .hindcard__gap.ok { color: var(--gold); }
+
+.hindhow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+@media (max-width: 860px) { .hindhow { grid-template-columns: 1fr; } }
+.hindhow > div { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--gold); border-radius: 12px; padding: 14px 16px; }
+.hindhow h3 { margin: 0 0 4px; font-family: var(--f-label); font-weight: 700; font-size: 17px; letter-spacing: 0.04em; text-transform: uppercase; }
+.hindhow p { margin: 0; color: var(--muted); font-size: 14px; }
+.hindcard li[data-tip] { cursor: help; }

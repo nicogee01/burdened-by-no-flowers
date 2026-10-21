@@ -388,6 +388,24 @@ def build(seasons, players, me, pinfo):
                               "hit": round(sum(1 for x in v if x >= HIT) / len(v), 2) if v else None})
 
     # ---------- hindsight: the best three each team could have kept, knowing how the season went ----------
+    # Two halves, averaged into one keeper score:
+    #   draft value = value of the pick he'd have cost in the draft (his ADP) minus the pick spent to keep him
+    #   outcome     = per-game production over a full season (small samples shrunk) minus the pick spent
+    SHRINK = 4      # replacement-level games added to every per-game rate
+    MIN_GAMES = 8   # fewer games than this earns only partial outcome credit
+    MIN_SCORE = 0.1 # below this, a player isn't worth a keeper slot
+    full_games = lambda y: tabs[y]["regEnd"] - 1  # one bye week
+
+    def per_game_war(y, pid):
+        r = war(y, pid)
+        if r["g"] == 0:
+            return 0.0, 0
+        credit = min(1.0, r["g"] / MIN_GAMES)
+        return max(r["par"] / (r["g"] + SHRINK), 0) * full_games(y) * model_wpp * credit, r["g"]
+
+    def pick_value(n):
+        return pick_curve[min(max(int(n), 1), n_picks) - 1]
+
     by_year = {x["league"]["season"]: x for x in seasons}
     hindsight = []
     for i, y in enumerate(years):
@@ -401,12 +419,34 @@ def build(seasons, players, me, pinfo):
         for t in prev["transactions"]:
             if t.get("status") == "complete" and t["type"] in ("free_agent", "waiver"):
                 prev_dropped.update((t.get("drops") or {}).keys())
-        actual_by_rid = {}
-        for h in history:
-            if h["season"] == y:
-                actual_by_rid.setdefault(h["rid"], []).append(h)
+        went = {p["player_id"]: p["pick_no"] for p in drafts[y]["picks"] if not p.get("is_keeper")}
+        kept_pick = {p["player_id"]: p["pick_no"] for p in drafts[y]["picks"] if p.get("is_keeper")}
+        # ADP stand-in for players nobody drafted that year (kept, or ignored): rank by last season's per-game value
+        market = sorted(((per_game_war(py, pid)[0], pid) for pid in tabs[py]["weekly"] if pos_of(pid) in POS), reverse=True)
+        proxy_rank = {pid: i + 1 for i, (_, pid) in enumerate(market)}
+
+        def adp_of(pid):
+            if pid in went:
+                return went[pid], "draft"
+            return proxy_rank.get(pid, n_picks), "estimate"
+
+        def grade(pid, cost_pick):
+            adp, src = adp_of(str(pid))
+            ev_cost = pick_value(cost_pick)
+            outcome, g = per_game_war(y, str(pid))
+            dv = pick_value(adp) - ev_cost
+            ov = outcome - ev_cost
+            return {"adp": adp, "adpSrc": src, "costPick": cost_pick, "evCost": round(ev_cost, 3),
+                    "draftVal": round(dv, 2), "outcome": round(outcome, 2), "outcomeVal": round(ov, 2),
+                    "g": g, "score": round((dv + ov) / 2, 2)}
+
         for r in prev["rosters"]:
             rid = r["roster_id"]
+            owned = {p["round"] for p in drafts[y]["picks"] if p["roster_id"] == rid} or set(range(1, rounds_y + 1))
+            team_pick = {}
+            for p in drafts[y]["picks"]:
+                if p["roster_id"] == rid:
+                    team_pick[p["round"]] = min(team_pick.get(p["round"], 10 ** 6), p["pick_no"])
             cands = []
             for pid in r.get("players") or []:
                 pos = pos_of(pid)
@@ -414,40 +454,35 @@ def build(seasons, players, me, pinfo):
                     continue
                 dp = prev_round.get(pid)
                 cost = max(dp["round"] - 1, 1) if dp and pid not in prev_dropped else rounds_y
-                w = war_pace(y, pid)["warPace"]
-                cr = min(cost, cur_rounds)
-                cands.append({"pid": pid, "name": pinfo(pid)["name"], "pos": pos, "cost": cost,
-                              "war": round(w, 2), "ev": ev.get(cr, 0), "surplus": round(w - ev.get(cr, 0), 2)})
-            cands.sort(key=lambda c: -c["surplus"])
-            owned = {p["round"] for p in drafts[y]["picks"] if p["roster_id"] == rid} or set(range(1, rounds_y + 1))
-            # league ADP: where each player actually went in that draft (keepers excluded)
-            went = {p["player_id"]: p["pick_no"] for p in drafts[y]["picks"] if not p.get("is_keeper")}
-            team_pick = {}
-            for p in drafts[y]["picks"]:
-                if p["roster_id"] == rid:
-                    team_pick[p["round"]] = min(team_pick.get(p["round"], 10 ** 6), p["pick_no"])
+                gr = grade(pid, team_pick.get(cost) or ((cost - 1) * teams + 5))
+                cands.append({"pid": pid, "name": pinfo(pid)["name"], "pos": pos, "cost": cost, **gr})
+            cands.sort(key=lambda c: -c["score"])
             best, used, redraft = [], set(), []
             for c in cands:
-                if len(best) >= 3 or c["surplus"] <= 0:
+                if len(best) >= 3 or c["score"] < MIN_SCORE:
                     break
                 cost = place(c["cost"], owned, used, rounds_y)
-                mine_pick, adp = team_pick.get(cost), went.get(str(c["pid"]))
-                if mine_pick and adp and adp > mine_pick:
+                mine_pick = team_pick.get(cost)
+                if mine_pick and c["adpSrc"] == "draft" and c["adp"] > mine_pick:
                     # he was still on the board when this team picked in that round: no point keeping him
-                    redraft.append({**c, "cost": cost, "adp": adp, "teamPick": mine_pick})
+                    redraft.append({**c, "cost": cost, "teamPick": mine_pick})
                     continue
                 used.add(cost)
-                e = ev.get(min(cost, cur_rounds), 0)
-                best.append({**c, "cost": cost, "ruleCost": c["cost"], "ev": e, "surplus": round(c["war"] - e, 2), "adp": adp})
-            actual = [{"pid": h["pid"], "name": h["name"], "pos": h["pos"], "cost": h["round"], "war": h["war"],
-                       "ev": h["ev"], "surplus": h["surplus"]} for h in actual_by_rid.get(rid, [])]
-            a_tot = round(sum(x["surplus"] for x in actual), 2)
-            b_tot = round(sum(x["surplus"] for x in best), 2)
+                gr = grade(c["pid"], mine_pick or ((cost - 1) * teams + 5))
+                best.append({**c, **gr, "cost": cost, "ruleCost": c["cost"]})
+            actual = []
+            for h in history:
+                if h["season"] == y and h["rid"] == rid:
+                    gr = grade(h["pid"], kept_pick.get(str(h["pid"])) or ((h["round"] - 1) * teams + 5))
+                    actual.append({"pid": h["pid"], "name": h["name"], "pos": h["pos"], "cost": h["round"], **gr})
+            a_tot = round(sum(x["score"] for x in actual), 2)
+            b_tot = round(sum(x["score"] for x in best), 2)
             kept_ids = {str(x["pid"]) for x in actual}
-            missed = [b for b in best if str(b["pid"]) not in kept_ids]
+            missed = [x for x in best if str(x["pid"]) not in kept_ids]
             hindsight.append({"season": y, "rid": rid, "partial": y not in complete, "actual": actual, "best": best,
                               "actualTotal": a_tot, "bestTotal": b_tot, "gap": round(b_tot - a_tot, 2),
-                              "missed": missed[:1], "pool": len(cands), "redraft": redraft[:3]})
+                              "missed": missed[:1], "pool": len(cands), "redraft": redraft[:3],
+                              "rules": {"shrink": SHRINK, "minGames": MIN_GAMES, "minScore": MIN_SCORE}})
 
     def alt(pid, y, cost):
         i = years.index(y)
