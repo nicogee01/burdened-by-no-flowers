@@ -363,6 +363,58 @@ def build(seasons, players, me, pinfo):
             band_rows.append({"pos": pos, "band": f"{lo}-{hi}", "n": len(v), "mean": round(statistics.mean(v), 2) if v else None,
                               "hit": round(sum(1 for x in v if x >= HIT) / len(v), 2) if v else None})
 
+    # ---------- hindsight: the best three each team could have kept, knowing how the season went ----------
+    by_year = {x["league"]["season"]: x for x in seasons}
+    hindsight = []
+    for i, y in enumerate(years):
+        if i == 0 or y not in drafts:
+            continue
+        py = years[i - 1]
+        prev = by_year[py]
+        rounds_y = drafts[y]["rounds"]
+        prev_round = {p["player_id"]: p for p in drafts.get(py, {}).get("picks", [])}
+        prev_dropped = set()
+        for t in prev["transactions"]:
+            if t.get("status") == "complete" and t["type"] in ("free_agent", "waiver"):
+                prev_dropped.update((t.get("drops") or {}).keys())
+        actual_by_rid = {}
+        for h in history:
+            if h["season"] == y:
+                actual_by_rid.setdefault(h["rid"], []).append(h)
+        for r in prev["rosters"]:
+            rid = r["roster_id"]
+            cands = []
+            for pid in r.get("players") or []:
+                pos = pos_of(pid)
+                if pos not in POS:
+                    continue
+                dp = prev_round.get(pid)
+                cost = max(dp["round"] - 1, 1) if dp and pid not in prev_dropped else rounds_y
+                w = war_pace(y, pid)["warPace"]
+                cr = min(cost, cur_rounds)
+                cands.append({"pid": pid, "name": pinfo(pid)["name"], "pos": pos, "cost": cost,
+                              "war": round(w, 2), "ev": ev.get(cr, 0), "surplus": round(w - ev.get(cr, 0), 2)})
+            cands.sort(key=lambda c: -c["surplus"])
+            best, used = [], set()
+            for c in cands:
+                if len(best) >= 3 or c["surplus"] <= 0:
+                    break
+                cost = c["cost"]
+                while cost in used and cost < rounds_y:
+                    cost += 1
+                used.add(cost)
+                e = ev.get(min(cost, cur_rounds), 0)
+                best.append({**c, "cost": cost, "ev": e, "surplus": round(c["war"] - e, 2)})
+            actual = [{"pid": h["pid"], "name": h["name"], "pos": h["pos"], "cost": h["round"], "war": h["war"],
+                       "ev": h["ev"], "surplus": h["surplus"]} for h in actual_by_rid.get(rid, [])]
+            a_tot = round(sum(x["surplus"] for x in actual), 2)
+            b_tot = round(sum(x["surplus"] for x in best), 2)
+            kept_ids = {str(x["pid"]) for x in actual}
+            missed = [b for b in best if str(b["pid"]) not in kept_ids]
+            hindsight.append({"season": y, "rid": rid, "partial": y not in complete, "actual": actual, "best": best,
+                              "actualTotal": a_tot, "bestTotal": b_tot, "gap": round(b_tot - a_tot, 2),
+                              "missed": missed[:1], "pool": len(cands)})
+
     def alt(pid, y, cost):
         i = years.index(y)
         before = project_at(pid, years[i - 1], years[i - 2] if i >= 2 else None)["proj"] if i else 0
@@ -379,5 +431,6 @@ def build(seasons, players, me, pinfo):
         "backtest": backtest, "keeperTrades": keeper_trades, "hitLine": HIT,
         "teams": teams, "pickCurve": pick_curve, "posDraft": pos_draft, "earlyShare": share, "slots": slots,
         "repl": {pos: round(statistics.mean(tabs[y]["repl"][pos] for y in complete), 2) if complete else 0 for pos in POS},
+        "hindsight": hindsight,
         "alt": {"watson2026": alt("8167", cur, cur_rounds) if "8167" in players else None},
     }

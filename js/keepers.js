@@ -462,6 +462,37 @@
     } else $("#goblinCase").hidden = true;
   }
 
+  // ================= hindsight keepers =================
+  const HS = K.hindsight || [];
+  let hindYear = HS.length ? HS[HS.length - 1].season : null;
+  function hindsight() {
+    if (!HS.length) { $("#k-hind").hidden = true; return; }
+    const tabsEl = $("#hindTabs");
+    if (!tabsEl.children.length) B.tabs(tabsEl, [...new Set(HS.map((h) => h.season))], hindYear, (v) => { hindYear = v; hindsight(); B.observe(); });
+    const rows = HS.filter((h) => h.season === hindYear).sort((a, b) => a.gap - b.gap);
+    const partial = rows[0] && rows[0].partial;
+    const avgGap = rows.reduce((a, h) => a + h.gap, 0) / rows.length;
+    const mine = rows.find((h) => String(h.rid) === ME);
+    $("#hindLede").innerHTML = `Using what actually happened in ${hindYear}${partial ? ` (on pace after ${K.position[hindYear].weeks} weeks, so this will keep moving)` : ""}, here are the three keepers each team <i>should</i> have kept from its roster at the end of ${+hindYear - 1}, priced with the league's keeper rules, next to the three it did keep. The average team left <b>${f2(avgGap)} wins</b> on the table.${mine ? ` You left <b>${f2(mine.gap)}</b>.` : ""} Players added in preseason trades aren't counted, because they weren't on the roster yet.`;
+    $("#hindSub").textContent = `${hindYear}: best possible keeper surplus minus actual. Sorted from best keeper to worst.`;
+    const mx = Math.max(0.5, ...rows.map((h) => h.gap));
+    $("#hindBoard").innerHTML = `<div class="luck">${rows.map((h) => `<div class="luck__row ${String(h.rid) === ME ? "is-me" : ""}">${tname(team(h.rid))}<div class="luck__track luck__track--left"><div class="luck__bar neg" style="width:${(h.gap / mx) * 100}%;left:0;right:auto"></div></div><span class="luck__v">${f2(h.gap)}</span></div>`).join("")}</div><p class="howto">Shorter bar = closer to the perfect three. Nobody can see the future, so the useful lesson is the kind of player teams missed: cheap late-round and waiver players who broke out.</p>`;
+    const line = (x, kept) => `<li class="${kept ? "is-kept" : ""}"><span class="${posCls(x.pos)}">${esc(x.pos)}</span><b>${esc(x.name)}</b><small>rd ${x.cost} · ${f2(x.war)} WAR</small><span class="hind__s ${x.surplus >= 0 ? "up" : "down"}">${sgn(x.surplus, 2)}</span></li>`;
+    const order = [...rows].sort((a, b) => (String(b.rid) === ME) - (String(a.rid) === ME) || b.gap - a.gap);
+    $("#hindCards").innerHTML = order.map((h) => {
+      const keptIds = new Set(h.actual.map((x) => String(x.pid))), bestIds = new Set(h.best.map((x) => String(x.pid)));
+      const miss = h.missed[0];
+      return `<article class="hindcard ${String(h.rid) === ME ? "is-me" : ""} reveal">
+        <header>${tname(team(h.rid))}<span class="hindcard__gap">${h.gap < 0.05 ? "Nailed it" : `−${f2(h.gap)} wins`}</span></header>
+        <div class="hindcard__cols">
+          <div><p class="bw__k">Actually kept · ${sgn(h.actualTotal, 2)}</p><ol>${h.actual.length ? h.actual.map((x) => line(x, bestIds.has(String(x.pid)))).join("") : `<li class="muted">Nobody</li>`}</ol></div>
+          <div><p class="bw__k">Hindsight best · ${sgn(h.bestTotal, 2)}</p><ol>${h.best.length ? h.best.map((x) => line(x, keptIds.has(String(x.pid)))).join("") : `<li class="muted">Nobody beat his pick</li>`}</ol></div>
+        </div>
+        ${miss ? `<p class="hindcard__note">Biggest miss: <b>${esc(miss.name)}</b>, available for a round-${miss.cost} pick and worth ${sgn(miss.surplus, 2)} wins over it${h.partial ? " on pace" : ""}.</p>` : ""}
+      </article>`;
+    }).join("");
+  }
+
   // ================= positions =================
   let dropYear = K.complete[K.complete.length - 1];
   function positions() {
@@ -590,7 +621,7 @@
   // ================= render =================
   function renderAll(full = true) {
     findings(); board(); build(); poolAndMarket(); priceGuide(); calc();
-    if (full) { keeperTrades(); curve(); history(); positions(); method(); glossary(); }
+    if (full) { keeperTrades(); curve(); history(); hindsight(); positions(); method(); glossary(); }
     B.observe();
   }
   const teamSel = $("#boardTeam");

@@ -10,9 +10,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=7" />
-  <link rel="stylesheet" href="css/lab.css?v=7" />
-  <link rel="stylesheet" href="css/lab-tools.css?v=7" />
+  <link rel="stylesheet" href="css/styles.css?v=8" />
+  <link rel="stylesheet" href="css/lab.css?v=8" />
+  <link rel="stylesheet" href="css/lab-tools.css?v=8" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -274,7 +274,7 @@
       <h1 class="page-hero__title">Keeper <em>Lab</em></h1>
       <p class="page-hero__sub" id="labSub">What is a keeper actually worth in wins, and what does it cost you at the draft?</p>
       <nav class="lab-toc" aria-label="Report sections">
-        <a href="#/keepers/k-glossary">How to read this</a><a href="#/keepers/k-board">Your board</a><a href="#/keepers/k-build">Build your 3</a><a href="#/keepers/k-pool">Draft pool &amp; targets</a><a href="#/keepers/k-trades">Trade price guide</a><a href="#/keepers/k-calc">Upside calculator</a><a href="#/keepers/k-curve">Pick value</a><a href="#/keepers/k-history">Who keeps best</a><a href="#/keepers/k-pos">RB vs. WR</a><a href="#/keepers/k-method">Method</a>
+        <a href="#/keepers/k-glossary">How to read this</a><a href="#/keepers/k-board">Your board</a><a href="#/keepers/k-build">Build your 3</a><a href="#/keepers/k-pool">Draft pool &amp; targets</a><a href="#/keepers/k-trades">Trade price guide</a><a href="#/keepers/k-calc">Upside calculator</a><a href="#/keepers/k-curve">Pick value</a><a href="#/keepers/k-history">Who keeps best</a><a href="#/keepers/k-hind">Hindsight keepers</a><a href="#/keepers/k-pos">RB vs. WR</a><a href="#/keepers/k-method">Method</a>
       </nav>
     </div></header>
 
@@ -411,6 +411,22 @@
       </article>
     </section>
 
+    <section class="section section--band" id="k-hind" aria-labelledby="kHindTitle">
+      <div class="section__head section__head--row">
+        <div>
+          <p class="eyebrow">07b · Twenty-twenty hindsight</p>
+          <h2 class="display" id="kHindTitle">Who should have been kept</h2>
+        </div>
+        <div class="seg" role="tablist" aria-label="Keeper season" id="hindTabs"></div>
+      </div>
+      <p class="lede" id="hindLede"></p>
+      <article class="panel" style="margin-top:24px">
+        <header class="panel__head"><h3>Wins left on the table <button class="info" type="button" data-tip="For each team: the surplus of the best three keepers it could have picked from its end-of-season roster, knowing how the next season went, minus the surplus of the three it actually kept. Zero means it kept the perfect three.">i</button></h3><p class="panel__sub" id="hindSub"></p></header>
+        <div id="hindBoard"></div>
+      </article>
+      <div class="hind" id="hindCards"></div>
+    </section>
+
     <section class="section section--band" id="k-pos" aria-labelledby="kPosTitle">
       <div class="section__head">
         <p class="eyebrow">08 · Two flex spots</p>
@@ -458,8 +474,8 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
-  <script src="js/keepers.js?v=7"></script>
+  <script src="data/site-data.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
+  <script src="js/keepers.js?v=8"></script>
 </body>
 </html>

@@ -96,3 +96,23 @@ td.shake { animation: shake 0.35s; }
 .build__adj { grid-column: 1 / -1; border-top: 1px solid var(--line); }
 .build__adj.good b { color: var(--gold); }
 .build__adj.bad b { color: var(--accent); }
+
+/* hindsight keepers */
+.luck__track--left::before { left: 0; }
+.hind { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; margin-top: 16px; }
+.hindcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.hindcard.is-me { border: 2px solid var(--ink); box-shadow: inset 6px 0 0 #c8102e; }
+.hindcard header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-weight: 700; }
+.hindcard__gap { font-family: var(--f-label); font-weight: 700; font-size: 15px; letter-spacing: 0.04em; color: var(--accent); white-space: nowrap; }
+.hindcard__cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .hindcard__cols { grid-template-columns: 1fr; } }
+.hindcard ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.hindcard li { display: grid; grid-template-columns: 30px 1fr auto; grid-template-rows: auto auto; column-gap: 8px; align-items: center; padding: 8px 10px; border-radius: 8px; background: var(--shade); font-size: 14px; }
+.hindcard li.is-kept { background: rgba(230, 196, 122, 0.3); }
+.hindcard li > span:first-child { grid-row: 1 / 3; font-family: var(--f-label); font-weight: 700; font-size: 12px; }
+.hindcard li small { grid-column: 2; color: var(--faint); font-size: 12px; }
+.hind__s { grid-column: 3; grid-row: 1 / 3; font-family: var(--f-label); font-weight: 700; font-variant-numeric: tabular-nums; }
+.hind__s.up { color: var(--gold); }
+.hind__s.down { color: var(--accent); }
+.hindcard__note { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
+.hindcard__note b { color: var(--text); }
