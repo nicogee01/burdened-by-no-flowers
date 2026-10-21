@@ -116,3 +116,5 @@ td.shake { animation: shake 0.35s; }
 .hind__s.down { color: var(--accent); }
 .hindcard__note { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
 .hindcard__note b { color: var(--text); }
+
+.hindcard__gap.ok { color: var(--gold); }

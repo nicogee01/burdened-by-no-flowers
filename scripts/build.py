@@ -47,6 +47,7 @@ def fetch_seasons():
             "transactions": [t for w in range(1, 19) for t in (get(f"league/{lid}/transactions/{w}") or [])],
             "drafts": get(f"league/{lid}/drafts") or [],
             "winners": get(f"league/{lid}/winners_bracket") or [],
+            "traded_picks": get(f"league/{lid}/traded_picks") or [],
         }
         for dr in s["drafts"]:
             dr["picks"] = get(f"draft/{dr['draft_id']}/picks") or []

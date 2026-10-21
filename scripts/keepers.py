@@ -72,6 +72,21 @@ def replacement(tab, pos_of, teams=10):
     return repl, pools
 
 
+def place(cost, owned, used, last):
+    """League rule: if you no longer own the pick in a keeper's round, he moves up to the nearest earlier
+    round you own; if two keepers collide, the later one slides back a round."""
+    c = cost
+    if c not in owned:
+        earlier = [r for r in owned if r < cost]
+        later = [r for r in owned if r > cost]
+        c = max(earlier) if earlier else (min(later) if later else cost)
+    while c in used and c < last:
+        c += 1
+        while c not in owned and c < last:
+            c += 1
+    return c
+
+
 def pava_decreasing(xs, ws):
     """Weighted isotonic regression, non-increasing."""
     blocks = [[x, w, 1] for x, w in zip(xs, ws)]
@@ -243,6 +258,14 @@ def build(seasons, players, me, pinfo):
 
     # ---------- next-year keeper board for every current roster ----------
     cur_s = next(x for x in seasons if x["league"]["season"] == cur)
+    owner_of = {(rnd, r["roster_id"]): r["roster_id"] for r in cur_s["rosters"] for rnd in range(1, cur_rounds + 1)}
+    for tp in cur_s.get("traded_picks") or []:
+        if str(tp.get("season")) == nxt and (tp["round"], tp["roster_id"]) in owner_of:
+            owner_of[(tp["round"], tp["roster_id"])] = tp["owner_id"]
+    owned_next = {}
+    for (rnd, _orig), own in owner_of.items():
+        owned_next.setdefault(str(own), set()).add(rnd)
+    owned_next = {k: sorted(v) for k, v in owned_next.items()}
     drafted_round = {p["player_id"]: p for p in drafts.get(cur, {}).get("picks", [])}
     dropped = set()
     for t in cur_s["transactions"]:
@@ -327,6 +350,7 @@ def build(seasons, players, me, pinfo):
             pr = project(pid)
             info = players.get(str(pid)) or {}
             rows.append({**pinfo(pid), "pos": pos, "cost": cost, "via": via,
+                         "lastPick": dp["pick_no"] if dp and not dp.get("is_keeper") else None,
                          "exp": info.get("years_exp"), "depth": info.get("depth_chart_order"),
                          "injury": info.get("injury_status"),
                          "draftRound": dp["round"] if dp else None, "wasKeeper": bool(dp and dp.get("is_keeper")),
@@ -395,16 +419,26 @@ def build(seasons, players, me, pinfo):
                 cands.append({"pid": pid, "name": pinfo(pid)["name"], "pos": pos, "cost": cost,
                               "war": round(w, 2), "ev": ev.get(cr, 0), "surplus": round(w - ev.get(cr, 0), 2)})
             cands.sort(key=lambda c: -c["surplus"])
-            best, used = [], set()
+            owned = {p["round"] for p in drafts[y]["picks"] if p["roster_id"] == rid} or set(range(1, rounds_y + 1))
+            # league ADP: where each player actually went in that draft (keepers excluded)
+            went = {p["player_id"]: p["pick_no"] for p in drafts[y]["picks"] if not p.get("is_keeper")}
+            team_pick = {}
+            for p in drafts[y]["picks"]:
+                if p["roster_id"] == rid:
+                    team_pick[p["round"]] = min(team_pick.get(p["round"], 10 ** 6), p["pick_no"])
+            best, used, redraft = [], set(), []
             for c in cands:
                 if len(best) >= 3 or c["surplus"] <= 0:
                     break
-                cost = c["cost"]
-                while cost in used and cost < rounds_y:
-                    cost += 1
+                cost = place(c["cost"], owned, used, rounds_y)
+                mine_pick, adp = team_pick.get(cost), went.get(str(c["pid"]))
+                if mine_pick and adp and adp > mine_pick:
+                    # he was still on the board when this team picked in that round: no point keeping him
+                    redraft.append({**c, "cost": cost, "adp": adp, "teamPick": mine_pick})
+                    continue
                 used.add(cost)
                 e = ev.get(min(cost, cur_rounds), 0)
-                best.append({**c, "cost": cost, "ev": e, "surplus": round(c["war"] - e, 2)})
+                best.append({**c, "cost": cost, "ruleCost": c["cost"], "ev": e, "surplus": round(c["war"] - e, 2), "adp": adp})
             actual = [{"pid": h["pid"], "name": h["name"], "pos": h["pos"], "cost": h["round"], "war": h["war"],
                        "ev": h["ev"], "surplus": h["surplus"]} for h in actual_by_rid.get(rid, [])]
             a_tot = round(sum(x["surplus"] for x in actual), 2)
@@ -413,7 +447,7 @@ def build(seasons, players, me, pinfo):
             missed = [b for b in best if str(b["pid"]) not in kept_ids]
             hindsight.append({"season": y, "rid": rid, "partial": y not in complete, "actual": actual, "best": best,
                               "actualTotal": a_tot, "bestTotal": b_tot, "gap": round(b_tot - a_tot, 2),
-                              "missed": missed[:1], "pool": len(cands)})
+                              "missed": missed[:1], "pool": len(cands), "redraft": redraft[:3]})
 
     def alt(pid, y, cost):
         i = years.index(y)
@@ -431,6 +465,6 @@ def build(seasons, players, me, pinfo):
         "backtest": backtest, "keeperTrades": keeper_trades, "hitLine": HIT,
         "teams": teams, "pickCurve": pick_curve, "posDraft": pos_draft, "earlyShare": share, "slots": slots,
         "repl": {pos: round(statistics.mean(tabs[y]["repl"][pos] for y in complete), 2) if complete else 0 for pos in POS},
-        "hindsight": hindsight,
+        "hindsight": hindsight, "ownedNext": owned_next,
         "alt": {"watson2026": alt("8167", cur, cur_rounds) if "8167" in players else None},
     }

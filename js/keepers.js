@@ -40,9 +40,20 @@
   const rowsFor = (rid) => (K.boards[rid] || []).map((r) => { const P = projOf(r), E = evFor(rid, r.cost); return { ...r, P, E, S: P - E, ov: overrides[r.id] != null }; });
 
   // keepers can't share a round: a collision pushes the later one back a round
+  // and if you traded away the pick in his round, he moves up to the nearest earlier round you still own
+  const ownedRounds = (rid) => new Set((K.ownedNext && K.ownedNext[String(rid)]) || Array.from({ length: R }, (_, i) => i + 1));
+  function place(cost, owned, used) {
+    let c = cost;
+    if (!owned.has(c)) {
+      const earlier = [...owned].filter((r) => r < cost), later = [...owned].filter((r) => r > cost);
+      c = earlier.length ? Math.max(...earlier) : later.length ? Math.min(...later) : cost;
+    }
+    while (used.has(c) && c < R) { c++; while (!owned.has(c) && c < R) c++; }
+    return c;
+  }
   function slotted(list, rid) {
-    const used = new Set();
-    return list.map((r) => { let c = r.cost; while (used.has(c) && c < R) c++; used.add(c); const E = evFor(rid, c); return { ...r, slotR: c, E2: E, S2: r.P - E }; });
+    const used = new Set(), owned = ownedRounds(rid);
+    return list.map((r) => { const c = place(r.cost, owned, used); used.add(c); const E = evFor(rid, c); return { ...r, slotR: c, E2: E, S2: r.P - E, moved: c !== r.cost ? (owned.has(r.cost) ? "slide" : "traded") : null }; });
   }
   const bestThree = (rid) => slotted(rowsFor(rid).filter((r) => r.S > 0).sort((a, b) => b.S - a.S).slice(0, K.maxKeepers), rid);
   let myKeep = new Set(store.get("keep", null) || bestThree(ME).map((r) => r.id));
@@ -61,16 +72,18 @@
       .sort((a, b) => b.P - a.P);
   }
   // pool players taken before your pick in round r: every pick ahead of yours, minus picks used by keepers
-  function poolPicksBefore(r, kept) {
-    const mine = pickNo(r, slot);
+  function poolPicksBefore(r, kept, s = slot, who = ME) {
+    const mine = pickNo(r, s);
     let keepersAhead = 0;
     for (const [rid, list] of Object.entries(kept)) for (const k of list) {
-      if (rid === ME) { if (pickNo(k.slotR, slot) < mine) keepersAhead++; }
+      if (rid === who) { if (pickNo(k.slotR, s) < mine) keepersAhead++; }
       else if (k.slotR < r) keepersAhead++;
-      else if (k.slotR === r) keepersAhead += (r % 2 ? slot - 1 : T - slot) / (T - 1);
+      else if (k.slotR === r) keepersAhead += (r % 2 ? s - 1 : T - s) / (T - 1);
     }
     return Math.max(0, mine - 1 - keepersAhead);
   }
+  // other teams' 2027 slot isn't known; their last draft slot is the best guess
+  const slotOf = (rid) => (String(rid) === ME ? slot : (K.slots[K.season] || {})[String(rid)] || Math.ceil(T / 2));
 
   // ---------------- shared data ----------------
   const hist = K.history.filter((h) => POS4.includes(h.pos));
@@ -114,7 +127,7 @@
       <article class="keep reveal">
         <span class="keep__n" aria-hidden="true">${i + 1}</span>
         <p class="keep__name">${esc(r.name)} <span class="${posCls(r.pos)}">${esc(r.pos)}</span></p>
-        <p class="keep__cost">Round ${r.slotR}${isMe ? ` · pick ${pickNo(r.slotR, slot)}` : ""}${r.slotR !== r.cost ? ` <small>(slides from ${r.cost})</small>` : ""}</p>
+        <p class="keep__cost">Round ${r.slotR}${isMe ? ` · pick ${pickNo(r.slotR, slot)}` : ""}${r.moved ? ` <small>(${r.moved === "traded" ? `your round-${r.cost} pick is traded, so he moves up` : `slides from ${r.cost}`})</small>` : ""}</p>
         <dl class="keep__stats"><div><dt>Proj. WAR ${info("Projected wins above replacement next season.")}</dt><dd>${f2(r.P)}</dd></div><div><dt>Pick worth ${info("What that pick usually turns into, in WAR.")}</dt><dd>${f2(r.E2)}</dd></div><div><dt>Surplus</dt><dd class="${r.S2 >= 0 ? "up" : "down"}">${sgn(r.S2, 2)}</dd></div></dl>
         <p class="keep__note">${isMe ? "Your pick" : "Model's pick"} #${i + 1}${r.ov ? " · using your projection" : ""}</p>
       </article>`).join("") : `<p class="lede">Nobody on this roster projects to beat the pick he'd cost.</p>`;
@@ -123,30 +136,32 @@
     $("#boardTable").innerHTML = `<table class="sortable board"><thead><tr>
       ${isMe ? `<th>Keep</th>` : ""}<th>Player</th><th>Acquired</th><th class="n">${K.next} cost</th><th class="n">${K.season} pts/gm</th>
       <th class="n">${isMe ? "Your pts/gm" : "Proj. pts/gm"} ${info(isMe ? "The points per game the projection assumes. Type your own number to override it; everything on the page updates." : "The points per game the projection assumes.")}</th>
-      <th class="n">Proj. WAR</th><th class="n">Pick worth</th><th>Surplus</th>${isMe ? `<th>Redraft check ${info("If he weren't kept, where would he rank among available players, and would he still be there at your pick in that round?")}</th>` : ""}</tr></thead><tbody>${rows.map((r) => {
+      <th class="n">Proj. WAR</th><th class="n">Pick worth</th><th>Surplus</th><th>Redraft check ${info("If he weren't kept, where would he rank among available players, and would he still be there at this team's pick in that round? Also shows where he went in last year's draft, the league's own ADP.")}</th></tr></thead><tbody>${rows.map((r) => {
       let redraft = "";
-      if (isMe) {
-        const keptNow = myKeep.has(r.id);
-        const rank = keptNow || r.P <= 0 ? (r.P > 0 ? 1 + P.filter((p) => p.P > r.P).length : null) : 1 + P.findIndex((p) => p.id === r.id);
-        const before = poolPicksBefore(r.cost, kept);
-        if (!rank) redraft = `<span class="muted">Not draftable value</span>`;
-        else if (rank > before) redraft = `<span class="flag flag--warn">Likely still there at pick ${pickNo(r.cost, slot)}</span><small>pool #${rank}; about ${Math.round(before)} taken before your pick. Keeping him gains little.</small>`;
-        else redraft = `<span class="flag flag--ok">Gone before your pick</span><small>pool #${rank}; about ${Math.round(before)} taken before pick ${pickNo(r.cost, slot)}</small>`;
+      {
+        const vs = slotOf(viewRid), inPool = P.findIndex((p) => p.id === r.id);
+        const rank = r.P <= 0 ? null : inPool >= 0 ? inPool + 1 : 1 + P.filter((p) => p.P > r.P).length;
+        const before = poolPicksBefore(r.cost, kept, vs, String(viewRid));
+        const adp = r.lastPick ? `<small>went #${r.lastPick} (round ${Math.ceil(r.lastPick / T)}) in the ${K.season} draft</small>` : "";
+        const who = isMe ? "your" : "their";
+        if (!rank) redraft = `<span class="muted">No keeper value</span>${adp}`;
+        else if (rank > before) redraft = `<span class="flag flag--warn">Likely still there at pick ${pickNo(r.cost, vs)}</span><small>pool #${rank}; about ${Math.round(before)} taken before ${who} pick. Keeping him gains little.</small>${adp}`;
+        else redraft = `<span class="flag flag--ok">Gone before ${who} pick</span><small>pool #${rank}; about ${Math.round(before)} taken before pick ${pickNo(r.cost, vs)}</small>${adp}`;
       }
       const notes = [r.exp != null && r.exp <= 1 ? `${r.exp === 0 ? "Rookie" : "2nd-year"}: model can't see growth` : "", r.pos === "RB" && r.depth > 1 ? "Backup on depth chart" : "", r.injury ? `Injury: ${r.injury}` : "", r.age && r.pos === "RB" && r.age >= 28 ? "Age 28+: trimmed 15%" : ""].filter(Boolean);
       return `<tr class="${ids.has(r.id) ? "is-keep" : ""}">
         ${isMe ? `<td><input type="checkbox" class="keepbox" data-id="${esc(r.id)}" ${myKeep.has(r.id) ? "checked" : ""} aria-label="Keep ${esc(r.name)}"></td>` : ""}
         <td><b>${esc(r.name)}</b> <span class="asset__pos ${posCls(r.pos)}">${esc(r.pos)} · ${esc(r.team)}${r.age ? " · age " + r.age : ""}</span>${notes.length ? `<br><small class="note">${notes.map(esc).join(" · ")}</small>` : ""}</td>
         <td>${r.via === "free agent" ? "Waivers" : r.wasKeeper ? `Kept, rd ${r.draftRound}` : `Drafted rd ${r.draftRound}`}</td>
-        <td class="n">Rd ${r.cost}${isMe ? `<br><small class="muted">pick ${pickNo(r.cost, slot)}</small>` : ""}</td>
+        <td class="n">Rd ${r.cost}<br><small class="muted">pick ${pickNo(r.cost, slotOf(viewRid))}${isMe ? "" : "*"}</small></td>
         <td class="n">${r.cur.g ? f1(r.cur.ppg) : "–"}<small class="muted"> ${r.cur.g}g</small></td>
         <td class="n">${isMe ? `<input class="ppg" type="number" inputmode="decimal" step="0.5" min="0" max="40" data-id="${esc(r.id)}" value="${f1(overrides[r.id] ?? implied(r))}" aria-label="Your points per game for ${esc(r.name)}">${r.ov ? `<button class="reset" type="button" data-reset="${esc(r.id)}" aria-label="Reset ${esc(r.name)} to the model">↺</button>` : ""}` : f1(implied(r))}</td>
         <td class="n">${f2(r.P)}</td>
         <td class="n">${f2(r.E)}</td>
         <td class="sbar"><span class="sbar__track"><i class="${r.S >= 0 ? "pos" : "neg"}" style="width:${(Math.abs(r.S) / max) * 50}%"></i></span><span class="sbar__v">${sgn(r.S, 2)}</span></td>
-        ${isMe ? `<td class="redraft">${redraft}</td>` : ""}
+        <td class="redraft">${redraft}</td>
       </tr>`; }).join("")}</tbody></table>`;
-    $("#boardHow").innerHTML = `<p><b>How to read a row:</b> a player who'd score at "Proj. pts/gm" next year adds "Proj. WAR" wins over a waiver pickup. "Pick worth" is what you'd usually get with the pick he costs. The surplus bar is the difference: gold means keeping him beats making the pick; red means you'd do better to draft.</p>${isMe ? `<p><b>Make it yours:</b> tick up to ${K.maxKeepers} boxes to choose keepers, and type a points-per-game number to override the model (your inputs are saved in this browser).</p>` : ""}`;
+    $("#boardHow").innerHTML = `<p><b>How to read a row:</b> a player who'd score at "Proj. pts/gm" next year adds "Proj. WAR" wins over a waiver pickup. "Pick worth" is what you'd usually get with the pick he costs. The surplus bar is the difference: gold means keeping him beats making the pick; red means you'd do better to draft.</p>${isMe ? "" : `<p class="muted">* Their ${K.next} slot isn't known, so their ${K.season} slot (pick ${slotOf(viewRid)}) is used.</p>`}${isMe ? `<p><b>Make it yours:</b> tick up to ${K.maxKeepers} boxes to choose keepers, and type a points-per-game number to override the model (your inputs are saved in this browser).</p>` : ""}`;
     if (isMe) {
       $("#boardTable").querySelectorAll(".keepbox").forEach((b) => b.addEventListener("change", () => {
         if (b.checked && myKeep.size >= K.maxKeepers) { b.checked = false; b.closest("td").classList.add("shake"); setTimeout(() => b.closest("td").classList.remove("shake"), 400); return; }
@@ -473,21 +488,22 @@
     const partial = rows[0] && rows[0].partial;
     const avgGap = rows.reduce((a, h) => a + h.gap, 0) / rows.length;
     const mine = rows.find((h) => String(h.rid) === ME);
-    $("#hindLede").innerHTML = `Using what actually happened in ${hindYear}${partial ? ` (on pace after ${K.position[hindYear].weeks} weeks, so this will keep moving)` : ""}, here are the three keepers each team <i>should</i> have kept from its roster at the end of ${+hindYear - 1}, priced with the league's keeper rules, next to the three it did keep. The average team left <b>${f2(avgGap)} wins</b> on the table.${mine ? ` You left <b>${f2(mine.gap)}</b>.` : ""} Players added in preseason trades aren't counted, because they weren't on the roster yet.`;
+    $("#hindLede").innerHTML = `Using what actually happened in ${hindYear}${partial ? ` (on pace after ${K.position[hindYear].weeks} weeks, so this will keep moving)` : ""}, here are the three keepers each team <i>should</i> have kept from its roster at the end of ${+hindYear - 1}, priced with the league's keeper rules, next to the three it did keep. The average team left <b>${f2(avgGap)} wins</b> on the table.${mine ? ` You left <b>${f2(mine.gap)}</b>.` : ""} Players added in preseason trades aren't counted, because they weren't on the roster yet. If a team had traded away the pick in a keeper's round, he moves up to the nearest earlier round it still owned, same as the league rule. And if a player actually went <i>later</i> in that draft than the team's pick in his keeper round, he doesn't count, because the team could have just drafted him. That's this league's real ADP.`;
     $("#hindSub").textContent = `${hindYear}: best possible keeper surplus minus actual. Sorted from best keeper to worst.`;
     const mx = Math.max(0.5, ...rows.map((h) => h.gap));
     $("#hindBoard").innerHTML = `<div class="luck">${rows.map((h) => `<div class="luck__row ${String(h.rid) === ME ? "is-me" : ""}">${tname(team(h.rid))}<div class="luck__track luck__track--left"><div class="luck__bar neg" style="width:${(h.gap / mx) * 100}%;left:0;right:auto"></div></div><span class="luck__v">${f2(h.gap)}</span></div>`).join("")}</div><p class="howto">Shorter bar = closer to the perfect three. Nobody can see the future, so the useful lesson is the kind of player teams missed: cheap late-round and waiver players who broke out.</p>`;
-    const line = (x, kept) => `<li class="${kept ? "is-kept" : ""}"><span class="${posCls(x.pos)}">${esc(x.pos)}</span><b>${esc(x.name)}</b><small>rd ${x.cost} · ${f2(x.war)} WAR</small><span class="hind__s ${x.surplus >= 0 ? "up" : "down"}">${sgn(x.surplus, 2)}</span></li>`;
+    const line = (x, kept) => `<li class="${kept ? "is-kept" : ""}"><span class="${posCls(x.pos)}">${esc(x.pos)}</span><b>${esc(x.name)}</b><small>rd ${x.cost}${x.ruleCost && x.ruleCost !== x.cost ? ` (rd ${x.ruleCost} ${x.cost < x.ruleCost ? "pick was traded" : "taken"})` : ""} · ${f2(x.war)} WAR</small><span class="hind__s ${x.surplus >= 0 ? "up" : "down"}">${sgn(x.surplus, 2)}</span></li>`;
     const order = [...rows].sort((a, b) => (String(b.rid) === ME) - (String(a.rid) === ME) || b.gap - a.gap);
     $("#hindCards").innerHTML = order.map((h) => {
       const keptIds = new Set(h.actual.map((x) => String(x.pid))), bestIds = new Set(h.best.map((x) => String(x.pid)));
       const miss = h.missed[0];
       return `<article class="hindcard ${String(h.rid) === ME ? "is-me" : ""} reveal">
-        <header>${tname(team(h.rid))}<span class="hindcard__gap">${h.gap < 0.05 ? "Nailed it" : `−${f2(h.gap)} wins`}</span></header>
+        <header>${tname(team(h.rid))}<span class="hindcard__gap ${h.gap < 0.05 ? "ok" : ""}">${h.gap < 0 ? "Beat it (traded for a keeper)" : h.gap < 0.05 ? "Nailed it" : `−${f2(h.gap)} wins`}</span></header>
         <div class="hindcard__cols">
           <div><p class="bw__k">Actually kept · ${sgn(h.actualTotal, 2)}</p><ol>${h.actual.length ? h.actual.map((x) => line(x, bestIds.has(String(x.pid)))).join("") : `<li class="muted">Nobody</li>`}</ol></div>
           <div><p class="bw__k">Hindsight best · ${sgn(h.bestTotal, 2)}</p><ol>${h.best.length ? h.best.map((x) => line(x, keptIds.has(String(x.pid)))).join("") : `<li class="muted">Nobody beat his pick</li>`}</ol></div>
         </div>
+        ${h.redraft && h.redraft.length ? `<p class="hindcard__note">Not worth keeping because they'd still be there: ${h.redraft.map((x) => `<b>${esc(x.name)}</b> (went #${x.adp}, their round-${x.cost} pick was #${x.teamPick})`).join(", ")}.</p>` : ""}
         ${miss ? `<p class="hindcard__note">Biggest miss: <b>${esc(miss.name)}</b>, available for a round-${miss.cost} pick and worth ${sgn(miss.surplus, 2)} wins over it${h.partial ? " on pace" : ""}.</p>` : ""}
       </article>`;
     }).join("");
@@ -578,7 +594,7 @@
       ["Your pick, not the average", `Your keeper cost uses the exact pick you'd give up at your chosen slot, in snake order (odd rounds go 1→${T}, even rounds ${T}→1). Other teams use the average pick in that round, since their slots aren't known.`],
       ["Projection", `Next season's WAR = (2 × this season's points above replacement + last season's) ÷ (2 × games + last season's games + 3), times expected games, times wins per point. The "+3" pulls small samples toward replacement. Age: RBs 28+ ×0.85, WRs/TEs 31+ ×0.9, QBs 36+ ×0.9. Expected games blend each player's availability with an 85% league norm. Your typed points per game replace this.`],
       ["Draft pool and redraft check", `Each other team is assumed to keep its three best by surplus; you keep what you tick. Everyone else is ranked by projected WAR. "Taken before your pick" = picks ahead of yours minus picks used on keepers. Real drafts follow names and needs, not this ranking, and 2027 rookies aren't in the pool, so treat it as a rough guide.`],
-      ["Keeper cost rules", `As seen in this league's drafts: one round earlier than the player's most recent draft slot; round 1 stays round 1; waiver pickups (or players dropped and re-added) cost round ${R}; collisions slide back a round. A few past keepers don't fit (likely commissioner calls), so confirm edge cases.`],
+      ["Keeper cost rules", `As seen in this league's drafts: one round earlier than the player's most recent draft slot; round 1 stays round 1; waiver pickups (or players dropped and re-added) cost round ${R}; if you traded away the pick in his round he moves up to the nearest earlier round you own; collisions slide back a round. A few past keepers don't fit (likely commissioner calls), so confirm edge cases.`],
       ["Backtest", `For keepers with a full season, the preseason projection correlated r = ${K.backtest.r} with what they produced (n = ${K.backtest.n}, average miss ${K.backtest.mae} wins). Good for sorting, not for splitting hairs.`],
       ["Blind spots", `NFL draft capital, depth-chart changes, coaching, injuries to teammates (a backup filling in, like Emanuel Wilson, looks like a starter), and second-year growth. That's what the "Your pts/gm" column and the upside calculator are for. Samples are small: ${K.complete.length} completed drafts and ${hist.length} keepers.`],
     ];
