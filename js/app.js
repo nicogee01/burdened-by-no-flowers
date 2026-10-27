@@ -197,6 +197,61 @@
       <p class="panel__note">${games.filter((g) => g.victim.owner === D.me).length ? `<b>${games.filter((g) => g.victim.owner === D.me).length} of the top ${games.length}</b> were scored against you.` : "None of these were against you. Small mercies."}</p>`;
   })();
 
+  // ---------- points-for pace ----------
+  (function pfPace() {
+    const live = cur.status !== "complete" && cur.weeksDone > 0 && cur.weeksDone < cur.regEnd;
+    const rows = D.seasons.filter((s) => s.weeksDone).flatMap((s) => s.teams.map((t) => {
+      const partial = s.weeksDone < s.regEnd;
+      return { s, t, pf: partial ? (t.pf / s.weeksDone) * s.regEnd : t.pf, partial, mine: t.owner === D.me };
+    }));
+    const complete = rows.filter((r) => !r.partial).sort((a, b) => b.pf - a.pf);
+    const rec = complete[0];
+    const myCur = rows.find((r) => r.s === cur && r.mine);
+    if (!rec || !myCur) { $("#pfPace").hidden = true; return; }
+    const perG = myCur.t.pf / cur.weeksDone, recPerG = rec.pf / rec.s.regEnd;
+    const over = myCur.pf - rec.pf;
+    const leader = rows.filter((r) => r.s === cur).sort((a, b) => b.pf - a.pf)[0];
+    $("#pfTitle").textContent = live
+      ? (over > 0 ? `On pace to break the league record by ${f0(over)}` : `On pace for ${f0(myCur.pf)} points, ${f0(-over)} short of the record`)
+      : `${f0(myCur.pf)} points scored`;
+    $("#pfStats").innerHTML = [
+      ["Scored so far", f1(myCur.t.pf), `${cur.weeksDone} games · ${ord(rankBy(cur, "pf", cur.myRid))} in the league`, "good"],
+      ["Per game", f1(perG), `record pace is ${f1(recPerG)}/game`, perG >= recPerG ? "good" : ""],
+      [live ? "On pace for" : "Final", f0(myCur.pf), live ? `over ${cur.regEnd} weeks` : "regular season", over > 0 ? "good" : ""],
+      ["League record", f0(rec.pf), `${esc(rec.t.name)}, ${rec.s.season} (${rec.t.w}–${rec.t.l})`, "good"],
+    ].map(([k, v, d, c]) => `<div><dt>${k}</dt><dd class="${c}">${v}</dd><p>${d}</p></div>`).join("");
+
+    const board = [...complete.slice(0, 10), ...rows.filter((r) => r.partial && (r.mine || r.pf >= rec.pf))].sort((a, b) => b.pf - a.pf);
+    const max = board[0].pf;
+    $("#pfChart").innerHTML = `<ol class="paceboard">${board.map((r, i) => {
+      const cls = r.partial && r.mine ? "is-me" : r === rec ? "is-rec" : r.partial ? "is-pace" : "";
+      const rec_ = r.partial ? (r.t.w + r.t.l ? `${r.t.w}–${r.t.l} so far` : "") : `went ${r.t.w}–${r.t.l}`;
+      return `<li class="${cls}" data-tip="${esc(`<b>${r.t.name}</b><br>${r.s.season} · ${r.partial ? `on pace (${f1(r.t.pf)} through ${r.s.weeksDone} weeks)` : "final regular season"}<br>${f1(r.pf / r.s.regEnd)} per game · ${rec_}`)}">
+        <span class="paceboard__n">${i + 1}</span>
+        <span class="paceboard__name">${esc(r.t.name)} <small>${r.s.season}${r.partial ? " · pace" : ""}${r === rec ? " · record" : ""} · ${rec_}</small></span>
+        <span class="paceboard__bar"><i style="width:${(r.pf / max) * 100}%"></i></span>
+        <span class="paceboard__v">${f0(r.pf)}</span></li>`;
+    }).join("")}</ol>`;
+
+    // biggest single-game scores, regular season, with whether the scorer still lost
+    const games = D.seasons.flatMap((s) => s.weeks.flatMap((wk, i) => Object.entries(wk).map(([rid, v]) => ({ s, week: i + 1, scorer: tm(s, rid), opp: tm(s, v.opp), pts: v.pts, oppPts: wk[v.opp].pts }))))
+      .sort((a, b) => b.pts - a.pts).slice(0, 8);
+    const mineTop = games.filter((g) => g.scorer.owner === D.me);
+    $("#pfGames").innerHTML = `<ol class="paceboard paceboard--games">${games.map((g, i) => `<li class="${g.scorer.owner === D.me ? "is-me" : ""}">
+        <span class="paceboard__n">${i + 1}</span>
+        <span class="paceboard__name">${esc(g.scorer.name)} <small>vs ${esc(g.opp.name)} · ${g.s.season} wk ${g.week}${g.pts < g.oppPts ? " · and lost" : ""}</small></span>
+        <span class="paceboard__v">${f1(g.pts)}</span></li>`).join("")}</ol>
+      <p class="panel__note">${mineTop.length ? `<b>${mineTop.length} of the top ${games.length}</b> are yours.` : "None of these are yours yet."}</p>`;
+
+    // the punchline: both records at once
+    const paMine = (myCur.t.pa / cur.weeksDone) * cur.regEnd;
+    const paRec = Math.max(...rows.filter((r) => !r.partial).map((r) => r.t.pa));
+    const both = live && over > 0 && paMine > paRec;
+    $("#pfNote").innerHTML = live
+      ? `${myCur.t.name} is ${ord(rankBy(cur, "pf", cur.myRid))} in points this season${leader.t.rid !== myCur.t.rid ? ` (${esc(leader.t.name)} leads, on pace for ${f0(leader.pf)})` : ""} and ${myCur.t.w}–${myCur.t.l}. ${both ? "<b>On pace to set the league record for points scored and points allowed in the same season.</b>" : over > 0 ? "On pace for the scoring record while losing anyway." : `Needs ${f1((rec.pf - myCur.t.pf) / Math.max(cur.regEnd - cur.weeksDone, 1))} a game the rest of the way to break the record.`}`
+      : "";
+  })();
+
   // ---------- week chart ----------
   let chartSeason = cur.season;
   function weekChart() {

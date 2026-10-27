@@ -156,3 +156,11 @@ svg [tabindex]:focus { outline: none; stroke: #c8102e; stroke-width: 3; }
 .method__row h3 { font-family: var(--f-label); font-weight: 700; font-size: 20px; letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 4px; }
 .method__row p { margin: 0; color: var(--muted); max-width: 80ch; }
 @media (max-width: 560px) { .method__row { grid-template-columns: 1fr; gap: 6px; } }
+
+/* points-for pace: same board, gold instead of red */
+.pace--pf { border-top-color: var(--gold); }
+.pace--pf .paceboard li.is-me { background: rgba(230, 196, 122, 0.25); box-shadow: inset 3px 0 0 var(--gold); }
+.pace--pf .paceboard li.is-me .paceboard__bar i { background: repeating-linear-gradient(135deg, var(--gold) 0 6px, #b8913f 6px 12px); }
+.pace--pf .paceboard li.is-me .paceboard__v { color: var(--gold); }
+.pace--pf .paceboard li.is-rec .paceboard__bar i { background: var(--ink); }
+.pace--pf .paceboard li.is-rec .paceboard__v { color: var(--ink); }
