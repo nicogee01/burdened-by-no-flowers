@@ -10,9 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=12" />
-  <link rel="stylesheet" href="css/lab.css?v=12" />
-  <link rel="stylesheet" href="css/lab-tools.css?v=12" />
+  <link rel="stylesheet" href="css/styles.css?v=13" />
+  <link rel="stylesheet" href="css/lab.css?v=13" />
+  <link rel="stylesheet" href="css/lab-tools.css?v=13" />
+  <link rel="stylesheet" href="css/redesign.css?v=13" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -23,9 +24,9 @@
       <div class="nav__links" id="navLinks">
         <a href="#/home" data-tab="home">Home</a>
         <a href="#/luck" data-tab="luck">Bad luck</a>
-        <a href="#/race" data-tab="race">Playoff race</a>
+        <a href="#/race" data-tab="race">Playoffs</a>
         <a href="#/trades" data-tab="trades">Trades</a>
-        <a href="#/keepers" data-tab="keepers">Keeper Lab <span class="nav__new">New</span></a>
+        <a href="#/keepers" data-tab="keepers">Keepers</a>
       </div>
     </div>
   </nav>
@@ -70,6 +71,8 @@
 
   <div class="page" data-page="luck" hidden>
     <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 1 · The evidence</p><h1 class="page-hero__title">Bad <em>luck</em></h1><p class="page-hero__sub">All-play records, the heater effect, schedule swaps and the points-against pace.</p></div></header>
+    <nav class="subnav" aria-label="Sections"><a href="#/luck/overview" data-sub="overview">Overview</a><a href="#/luck/records" data-sub="records">Records</a><a href="#/luck/weeks" data-sub="weeks">Week by week</a></nav>
+    <div class="sub" data-sub="overview">
     <!-- ===== CASE FILE ===== -->
     <section class="section" id="case" aria-labelledby="caseTitle">
       <div class="section__head">
@@ -79,7 +82,13 @@
       </div>
       <div class="cards" id="caseCards"></div>
 
-      <article class="panel pace" id="pace" style="margin-top:16px">
+    </section>
+
+    <!-- ===== WEEK BY WEEK ===== -->
+    </div>
+    <div class="sub" data-sub="records" hidden>
+    <section class="section" id="records" aria-label="Scoring records">
+      <article class="panel pace" id="pace" style="margin-bottom:16px">
         <header class="panel__head">
           <p class="eyebrow" style="margin-bottom:6px">Points against, on pace</p>
           <h3 id="paceTitle">Chasing the wrong record</h3>
@@ -98,7 +107,7 @@
         </div>
       </article>
 
-      <article class="panel pace pace--pf" id="pfPace" style="margin-top:16px">
+      <article class="panel pace pace--pf" id="pfPace" style="margin-bottom:16px">
         <header class="panel__head">
           <p class="eyebrow" style="margin-bottom:6px">Points for, on pace</p>
           <h3 id="pfTitle">Chasing the right record, too</h3>
@@ -118,8 +127,8 @@
         <p class="panel__note" id="pfNote"></p>
       </article>
     </section>
-
-    <!-- ===== WEEK BY WEEK ===== -->
+    </div>
+    <div class="sub" data-sub="weeks" hidden>
     <section class="section section--band" id="weeks" aria-labelledby="weeksTitle">
       <div class="section__head section__head--row">
         <div>
@@ -178,10 +187,13 @@
         <div id="luckTable"></div>
       </article>
     </section>
+    </div>
   </div>
 
   <div class="page" data-page="race" hidden>
     <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 2 · The only way out</p><h1 class="page-hero__title">Playoff <em>race</em></h1><p class="page-hero__sub">Simulated odds, the division path to a bye, and every bye week left on the schedule.</p></div></header>
+    <nav class="subnav" aria-label="Sections"><a href="#/race/odds" data-sub="odds">Playoff odds</a><a href="#/race/byes" data-sub="byes">Bye weeks</a></nav>
+    <div class="sub" data-sub="odds">
     <!-- ===== ROAD TO THE BYE ===== -->
     <section class="section" id="road" aria-labelledby="roadTitle">
       <div class="section__head">
@@ -224,6 +236,8 @@
       </article>
     </section>
 
+    </div>
+    <div class="sub" data-sub="byes" hidden>
     <!-- ===== BYES ===== -->
     <section class="section section--band" id="byes" aria-labelledby="byesTitle">
       <div class="section__head">
@@ -261,229 +275,181 @@
         </article>
       </div>
     </section>
+    </div>
   </div>
 
   <div class="page" data-page="trades" hidden>
     <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 3 · Deadline day, every day</p><h1 class="page-hero__title">The trade <em>desk</em></h1><p class="page-hero__sub">Every deal, scored by what it produced. Every traded pick, traced to the player it became.</p></div></header>
     <!-- ===== TRADES ===== -->
+    <nav class="subnav" aria-label="Sections"><a href="#/trades/mine" data-sub="mine">My trades</a><a href="#/trades/picks" data-sub="picks">Traded picks</a><a href="#/trades/league" data-sub="league">League trades</a></nav>
+    <div class="sub" data-sub="mine">
     <section class="section" id="trades" aria-labelledby="tradesTitle">
-      <div class="section__head">
-        <h2 class="display" id="tradesTitle">The ledger</h2>
-        <p class="lede">Each trade is scored by the fantasy points its pieces put up <em>as starters</em> for the team that got them, from the trade onward. Traded draft picks are traced to the player they turned into, and to that player's points.</p>
-      </div>
+      <p class="howto" style="margin-top:0">Each trade is scored by the fantasy points its pieces scored <em>as starters</em> for the team that got them, from the trade onward. Traded picks are traced to the player they became.</p>
       <div class="trade-stats" id="tradeStats"></div>
-      <h3 class="subhead">Your deals</h3>
+      <h2 class="subhead" id="tradesTitle">Your deals</h2>
       <div class="trades" id="myTrades"></div>
-
-      <h3 class="subhead">Where every traded pick ended up</h3>
+    </section>
+    </div>
+    <div class="sub" data-sub="picks" hidden>
+    <section class="section" aria-labelledby="picksTitle">
+      <h2 class="subhead" id="picksTitle" style="margin-top:0">Where every traded pick ended up</h2>
       <div class="panel panel--flush"><div class="table-wrap" id="pickTracker"></div></div>
-
-      <div class="section__head section__head--row" style="margin-top:48px">
-        <h3 class="subhead" style="margin:0">Around the league</h3>
+    </section>
+    </div>
+    <div class="sub" data-sub="league" hidden>
+    <section class="section" aria-labelledby="leagueTitle">
+      <div class="section__head section__head--row" style="margin-bottom:16px">
+        <h2 class="subhead" id="leagueTitle" style="margin:0">Around the league</h2>
         <div class="seg" role="tablist" aria-label="Trade season" id="tradeTabs"></div>
       </div>
       <div class="trades trades--compact" id="leagueTrades"></div>
-      <p class="panel__note" style="margin-top:24px">Preseason pick-for-keeper deals, including James Cook, are broken down in the <a href="#/keepers/k-trades">Keeper Lab</a>.</p>
+      <p class="panel__note" style="margin-top:24px">Preseason pick-for-keeper deals, including James Cook, are graded under <a href="#/keepers/targets">Keepers → Targets &amp; trades</a>.</p>
     </section>
+    </div>
   </div>
 
-  <!-- ===== KEEPER LAB ===== -->
+  <!-- ===== KEEPERS ===== -->
   <div class="page" data-page="keepers" hidden>
     <header class="page-hero page-hero--lab"><div class="page-hero__in">
-      <p class="eyebrow">Tab 4 · Report</p>
-      <h1 class="page-hero__title">Keeper <em>Lab</em></h1>
-      <p class="page-hero__sub" id="labSub">What is a keeper actually worth in wins, and what does it cost you at the draft?</p>
-      <nav class="lab-toc" aria-label="Report sections">
-        <a href="#/keepers/k-glossary">How to read this</a><a href="#/keepers/k-board">Your board</a><a href="#/keepers/k-build">Build your 3</a><a href="#/keepers/k-pool">Draft pool &amp; targets</a><a href="#/keepers/k-trades">Trade price guide</a><a href="#/keepers/k-calc">Upside calculator</a><a href="#/keepers/k-curve">Pick value</a><a href="#/keepers/k-history">Who keeps best</a><a href="#/keepers/k-hind">Hindsight keepers</a><a href="#/keepers/k-pos">RB vs. WR</a><a href="#/keepers/k-method">Method</a>
-      </nav>
+      <p class="eyebrow">Tab 4 · Plan next year</p>
+      <h1 class="page-hero__title">Keep<em>ers</em></h1>
+      <p class="page-hero__sub" id="labSub">Who to keep for next season, and what each keeper is really worth.</p>
     </div></header>
+    <nav class="subnav" aria-label="Keepers sections">
+      <a href="#/keepers/mine" data-sub="mine">My keepers</a>
+      <a href="#/keepers/targets" data-sub="targets">Targets &amp; trades</a>
+      <a href="#/keepers/history" data-sub="history">Past keepers</a>
+      <a href="#/keepers/how" data-sub="how">How it works</a>
+    </nav>
 
-    <section class="section" id="k-summary" aria-labelledby="kSumTitle">
-      <div class="section__head">
-        <p class="eyebrow">The short version</p>
-        <h2 class="display" id="kSumTitle">Key findings</h2>
-      </div>
-      <div class="findings" id="labFindings"></div>
-    </section>
-
-    <section class="section section--band" id="k-glossary" aria-labelledby="kGlossTitle">
-      <div class="section__head">
-        <p class="eyebrow">Start here</p>
-        <h2 class="display" id="kGlossTitle">How to read this</h2>
-        <p class="lede">Every number on this page uses one unit: <b>wins</b>. That way a running back, a receiver and a draft pick can all be compared directly. Tap any <span class="info info--demo" aria-hidden="true">i</span> for a quick explanation.</p>
-      </div>
-      <div class="gloss" id="glossary"></div>
-    </section>
-
-    <section class="section" id="k-board" aria-labelledby="kBoardTitle">
-      <div class="section__head section__head--row">
-        <div>
-          <p class="eyebrow">01 · Plan ahead</p>
-          <h2 class="display" id="kBoardTitle">Keeper board</h2>
-        </div>
-        <div class="controls">
-          <label class="select"><span>Team</span><select id="boardTeam"></select></label>
+    <!-- My keepers -->
+    <div class="sub" data-sub="mine">
+      <section class="section" id="k-board" aria-labelledby="kBoardTitle">
+        <div class="kbar">
           <label class="select"><span>Your 2027 draft slot</span><select id="slotSel"></select></label>
+          <label class="select"><span>Show team</span><select id="boardTeam"></select></label>
+          <button type="button" class="btn-ghost" id="resetKeep">Reset to recommended</button>
         </div>
-      </div>
-      <p class="lede" id="boardLede" style="margin-bottom:12px"></p>
-      <p class="howto" id="slotNote"></p>
-      <div class="topthree" id="boardTop"></div>
-      <article class="panel panel--flush">
-        <div class="table-wrap" id="boardTable"></div>
-        <div class="howto howto--in" id="boardHow"></div>
-      </article>
-    </section>
+        <p class="howto" id="slotNote"></p>
 
-    <section class="section section--band" id="k-build" aria-labelledby="kBuildTitle">
-      <div class="section__head">
-        <p class="eyebrow">02 · Your call</p>
-        <h2 class="display" id="kBuildTitle">Build your three</h2>
-        <p class="lede">Tick up to three keepers in the board above, or use a preset below. This compares your set to the model's: how much they'll produce, which picks you give up, and which picks you keep.</p>
-      </div>
-      <div class="presets" id="presets"></div>
-      <div class="build" id="build" aria-live="polite"></div>
-    </section>
+        <h2 class="subhead" id="kBoardTitle">Recommended keepers</h2>
+        <div class="topthree" id="boardTop"></div>
 
-    <section class="section" id="k-pool" aria-labelledby="kPoolTitle">
-      <div class="section__head">
-        <p class="eyebrow">03 · Who will be there</p>
-        <h2 class="display" id="kPoolTitle">Draft pool &amp; trade targets</h2>
-        <p class="lede">If every other team keeps its best three by this model and you keep the set above, these are the best players going back into the draft. It also shows who teams can't fit in their three, which makes them trade targets.</p>
-      </div>
-      <div class="two two--even">
+        <h2 class="subhead">Every player, one verdict</h2>
+        <p class="howto" id="boardLede"></p>
+        <div class="klist" id="boardTable"></div>
+
+        <h2 class="subhead">Your plan</h2>
+        <div class="plan" id="plan" aria-live="polite"></div>
+        <div class="howto" id="boardHow"></div>
+      </section>
+    </div>
+
+    <!-- Targets & trades -->
+    <div class="sub" data-sub="targets" hidden>
+      <section class="section" id="k-pool" aria-labelledby="kPoolTitle">
+        <h2 class="subhead" id="kPoolTitle">Who'll be in the draft</h2>
+        <p class="howto">If every team keeps its best three (and you keep yours), these are the best players going back into the draft. Players on teams with more good keepers than slots are trade targets.</p>
+        <div class="two two--even">
+          <article class="panel">
+            <header class="panel__head"><h3>Projected draft pool</h3><p class="panel__sub" id="poolSub"></p></header>
+            <div class="seg seg--sm" role="tablist" aria-label="Position" id="poolTabs"></div>
+            <div id="poolTable"></div>
+          </article>
+          <article class="panel">
+            <header class="panel__head"><h3>Trade targets: keepers that won't fit</h3><p class="panel__sub">Worth keeping, but outside their team's top three</p></header>
+            <div id="marketTable"></div>
+          </article>
+        </div>
+      </section>
+      <section class="section section--band" id="k-trades" aria-labelledby="kTradesTitle">
+        <h2 class="subhead" id="kTradesTitle">Keeper trade price guide</h2>
+        <p class="howto">Before the draft you can trade picks for another team's keeper. Pick a player to see the most a buyer should pay and the least a seller should take.</p>
+        <div class="price" id="priceGuide"></div>
+        <h3 class="subhead">Past keeper trades, graded</h3>
+        <div class="ktrades" id="keeperTrades"></div>
+      </section>
+    </div>
+
+    <!-- Past keepers -->
+    <div class="sub" data-sub="history" hidden>
+      <section class="section" id="k-hind" aria-labelledby="kHindTitle">
+        <div class="section__head section__head--row">
+          <h2 class="subhead" id="kHindTitle" style="margin:0">Who should have been kept</h2>
+          <div class="seg" role="tablist" aria-label="Keeper season" id="hindTabs"></div>
+        </div>
+        <p class="howto" id="hindLede"></p>
+        <div class="hindhow" id="hindHow"></div>
+        <article class="panel" style="margin-top:16px">
+          <header class="panel__head"><h3>Wins left on the table</h3><p class="panel__sub" id="hindSub"></p></header>
+          <div id="hindBoard"></div>
+        </article>
+        <div class="hind" id="hindCards"></div>
+      </section>
+      <section class="section section--band" id="k-history" aria-labelledby="kHistTitle">
+        <div class="section__head section__head--row">
+          <h2 class="subhead" id="kHistTitle" style="margin:0">Keeper report card</h2>
+          <label class="select"><span>Show team</span><select id="histTeam"></select></label>
+        </div>
+        <p class="howto" id="histLede"></p>
+        <div class="cards" id="histCards" style="margin-top:16px"></div>
+        <article class="panel" style="margin-top:16px">
+          <header class="panel__head"><h3>Every keeper: what he produced vs. what he cost</h3>
+            <div class="legend"><span><i class="sw sw--dot"></i>Beat his pick</span><span><i class="sw sw--dotred"></i>Fell short</span><span><i class="sw sw--ring"></i>2026, on pace</span><span><i class="sw sw--med"></i>What that round's pick produces</span></div>
+          </header>
+          <div class="chart" id="histChart"></div>
+          <p class="howto">Dots above the gold line beat the pick they used up. Hover or tap a dot for details.</p>
+        </article>
+        <div class="two">
+          <article class="panel"><header class="panel__head"><h3>Keeper surplus by manager</h3><p class="panel__sub">Tap a team to filter</p></header><div id="mgrTable"></div></article>
+          <article class="panel case" id="goblinCase"></article>
+        </div>
+        <details class="panel panel--flush disclose" style="margin-top:16px"><summary id="histTableTitle">Every keeper (table)</summary><div class="table-wrap" id="histTable"></div></details>
+      </section>
+    </div>
+
+    <!-- How it works -->
+    <div class="sub" data-sub="how" hidden>
+      <section class="section" id="k-glossary" aria-labelledby="kGlossTitle">
+        <h2 class="subhead" id="kGlossTitle">The terms, in plain English</h2>
+        <div class="gloss" id="glossary"></div>
+      </section>
+      <section class="section section--band" id="k-curve" aria-labelledby="kCurveTitle">
+        <h2 class="subhead" id="kCurveTitle">What a draft pick is worth</h2>
+        <p class="howto" id="curveLede"></p>
+        <div class="two two--even">
+          <article class="panel"><header class="panel__head"><h3>Wins above replacement per pick, by round</h3><p class="panel__sub">Bars: average in that round. Line: the smoothed price the model uses.</p></header><div id="curveChart"></div></article>
+          <article class="panel"><header class="panel__head"><h3>Hit rate by round</h3><p class="panel__sub" id="hitSub"></p></header><div id="hitChart"></div></article>
+        </div>
+      </section>
+      <section class="section" id="k-pos" aria-labelledby="kPosTitle">
+        <h2 class="subhead" id="kPosTitle">Running backs vs. receivers</h2>
+        <p class="howto" id="posLede"></p>
         <article class="panel">
-          <header class="panel__head"><h3>Projected 2027 draft pool <button class="info" type="button" data-tip="Players not kept, ranked by projected wins above replacement. Rookies from the 2027 NFL draft aren't in it, so real availability is a bit worse than shown.">i</button></h3><p class="panel__sub" id="poolSub"></p></header>
-          <div class="seg seg--sm" role="tablist" aria-label="Position" id="poolTabs"></div>
-          <div id="poolTable"></div>
+          <header class="panel__head"><h3>Points per game by positional rank</h3><p class="panel__sub" id="dropSub"></p>
+            <div class="legend"><span><i class="sw sw--rb"></i>RB</span><span><i class="sw sw--wr"></i>WR</span><span><i class="sw sw--repl"></i>Replacement level</span></div>
+            <div class="seg seg--sm" role="tablist" aria-label="Season" id="dropTabs" style="margin-top:12px"></div>
+          </header>
+          <div id="dropChart"></div>
         </article>
         <article class="panel">
-          <header class="panel__head"><h3>Trade targets: keepers that won't fit <button class="info" type="button" data-tip="Players worth more than the pick they'd cost, on teams that already have three better keepers. The owner can't keep them all, so they should take a pick for them before the draft.">i</button></h3><p class="panel__sub">Positive surplus, but outside their team's top three</p></header>
-          <div id="marketTable"></div>
+          <header class="panel__head"><h3>Replacement level and stability</h3></header>
+          <div id="posTable"></div>
+          <div class="howto howto--grid">
+            <p><b>Replacement level</b> is the points per game you can get for free on waivers at that position.</p>
+            <p><b>Stability r</b> is how well one season predicts the next: 0 means no connection, 1 means identical.</p>
+          </div>
         </article>
-      </div>
-    </section>
-
-    <section class="section section--band" id="k-trades" aria-labelledby="kTradesTitle">
-      <div class="section__head">
-        <p class="eyebrow">04 · Picks for keepers</p>
-        <h2 class="display" id="kTradesTitle">Keeper trade price guide</h2>
-        <p class="lede">Before the draft you can trade picks for another team's keeper. Pick any player to see what he's worth to a buyer, what the seller gives up, and the range where a deal makes sense for both sides.</p>
-      </div>
-      <div class="price" id="priceGuide"></div>
-      <h3 class="subhead">Past keeper trades, graded</h3>
-      <div class="ktrades" id="keeperTrades"></div>
-    </section>
-
-    <section class="section" id="k-calc" aria-labelledby="kCalcTitle">
-      <div class="section__head">
-        <p class="eyebrow">05 · Lottery tickets</p>
-        <h2 class="display" id="kCalcTitle">The upside calculator</h2>
-        <p class="lede">The model only knows past points. It can't see that Matthew Golden is a second-year receiver who might become Green Bay's top target, or that a rookie like Carnell Tate went top-3 in the NFL draft. Set what <i>you</i> think a player will score and see what that's worth.</p>
-      </div>
-      <div class="calc" id="calc"></div>
-    </section>
-
-    <section class="section section--band" id="k-curve" aria-labelledby="kCurveTitle">
-      <div class="section__head">
-        <p class="eyebrow">06 · The price tag</p>
-        <h2 class="display" id="kCurveTitle">What a draft pick is worth</h2>
-        <p class="lede" id="curveLede"></p>
-      </div>
-      <div class="two two--even">
-        <article class="panel">
-          <header class="panel__head"><h3>Wins above replacement per pick, by round <button class="info" type="button" data-tip="For each round, the average wins above replacement produced by the players taken there in 2024 and 2025. That average is what a pick in that round is worth, so it's the price of a keeper in that round.">i</button></h3><p class="panel__sub">Bars: raw average in that round. Line: the smoothed curve the model uses as the price.</p></header>
-          <div id="curveChart"></div>
-          <p class="howto">How to read it: the taller the bar, the more a pick in that round has produced. The line can only go down, which removes noise like a lucky round-10 hit.</p>
-        </article>
-        <article class="panel">
-          <header class="panel__head"><h3>Hit rate by round <button class="info" type="button" data-tip="A hit is a player who produced at least half a win above replacement, about a top-12 RB or WR season. The bar is the share of picks in that round that hit.">i</button></h3><p class="panel__sub" id="hitSub"></p></header>
-          <div id="hitChart"></div>
-          <p class="howto">How to read it: a bar of 50 means half the players drafted in that round turned into a top-12 type season.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section" id="k-history" aria-labelledby="kHistTitle">
-      <div class="section__head section__head--row">
-        <div>
-          <p class="eyebrow">07 · Who's the best at keeping?</p>
-          <h2 class="display" id="kHistTitle">Keeper report card</h2>
+        <div class="two two--even">
+          <article class="panel"><header class="panel__head"><h3>Value by position and round</h3><p class="panel__sub">n = players in the sample; hit % = share with half a win or more</p></header><div id="bandTable"></div></article>
+          <article class="panel"><header class="panel__head"><h3>Does this league overdraft RBs?</h3><p class="panel__sub">What each position produced minus the value of the pick spent</p></header><div id="rbPremium"></div></article>
         </div>
-        <label class="select"><span>Show team</span><select id="histTeam"></select></label>
-      </div>
-      <p class="lede" id="histLede"></p>
-      <div class="cards" id="histCards" style="margin-top:24px"></div>
-      <article class="panel" style="margin-top:16px">
-        <header class="panel__head"><h3>Every keeper since 2025: what he produced vs. what he cost <button class="info" type="button" data-tip="Each dot is one keeper. Left to right: the round he cost. Bottom to top: the wins above replacement he actually produced. The gold line is what a normal pick in that round produces. A dot above the line beat the pick he used up.">i</button></h3>
-          <div class="legend"><span><i class="sw sw--dot"></i>Full season, beat his pick</span><span><i class="sw sw--dotred"></i>Full season, fell short</span><span><i class="sw sw--ring"></i>2026, on pace</span><span><i class="sw sw--med"></i>What that round's pick produces</span></div>
-        </header>
-        <div class="chart" id="histChart"></div>
-        <p class="howto">How to read it: the further a dot sits above the gold line, the bigger the win. A star kept in round 1 can produce a lot and still sit close to the line, because a 1st-round pick is expensive. A useful player kept in round 12 sits way above it. Pick a team at the top right to highlight its keepers.</p>
-      </article>
-      <div class="two">
-        <article class="panel"><header class="panel__head"><h3>Keeper surplus by manager <button class="info" type="button" data-tip="Each manager's total keeper surplus: wins produced above the picks spent, adding 2025 (final) and 2026 (on pace). Higher means they've kept the right players at the right prices.">i</button></h3><p class="panel__sub">2025 final plus 2026 on pace</p></header><div id="mgrTable"></div></article>
-        <article class="panel case" id="goblinCase"></article>
-      </div>
-      <article class="panel panel--flush" style="margin-top:16px">
-        <header class="panel__head" style="padding:20px 20px 0"><h3 id="histTableTitle">Every keeper</h3><p class="panel__sub">Click a column to sort. "Model before" is what the model would have projected before that season, so you can judge it too.</p></header>
-        <div class="table-wrap" id="histTable"></div>
-      </article>
-    </section>
-
-    <section class="section section--band" id="k-hind" aria-labelledby="kHindTitle">
-      <div class="section__head section__head--row">
-        <div>
-          <p class="eyebrow">07b · Twenty-twenty hindsight</p>
-          <h2 class="display" id="kHindTitle">Who should have been kept</h2>
-        </div>
-        <div class="seg" role="tablist" aria-label="Keeper season" id="hindTabs"></div>
-      </div>
-      <p class="lede" id="hindLede"></p>
-      <div class="hindhow" id="hindHow"></div>
-      <article class="panel" style="margin-top:24px">
-        <header class="panel__head"><h3>Wins left on the table <button class="info" type="button" data-tip="For each team: the keeper score of the best three it could have kept from its end-of-season roster, minus the score of the three it actually kept. Zero means it kept the perfect three.">i</button></h3><p class="panel__sub" id="hindSub"></p></header>
-        <div id="hindBoard"></div>
-      </article>
-      <div class="hind" id="hindCards"></div>
-    </section>
-
-    <section class="section section--band" id="k-pos" aria-labelledby="kPosTitle">
-      <div class="section__head">
-        <p class="eyebrow">08 · Two flex spots</p>
-        <h2 class="display" id="kPosTitle">Running backs vs. receivers</h2>
-        <p class="lede" id="posLede"></p>
-      </div>
-      <article class="panel">
-        <header class="panel__head"><h3>Points per game by positional rank <button class="info" type="button" data-tip="Each line ranks every RB (solid) or WR (dashed) by points per game, best to worst. The dotted lines are replacement level for each position. The gap between a player's line and replacement is what he's worth.">i</button></h3><p class="panel__sub" id="dropSub"></p>
-          <div class="legend"><span><i class="sw sw--rb"></i>RB</span><span><i class="sw sw--wr"></i>WR</span><span><i class="sw sw--repl"></i>Replacement level</span></div>
-          <div class="seg seg--sm" role="tablist" aria-label="Season" id="dropTabs" style="margin-top:12px"></div>
-        </header>
-        <div id="dropChart"></div>
-        <p class="howto">How to read it: where the RB line sits above the WR line, top running backs give you more over a waiver-wire player than top receivers do. Where the lines meet, the positions are worth the same.</p>
-      </article>
-      <article class="panel">
-        <header class="panel__head"><h3>Replacement level and stability</h3><p class="panel__sub">The two numbers that decide how much a position is worth to keep</p></header>
-        <div id="posTable"></div>
-        <div class="howto howto--grid">
-          <p><b>Replacement level</b> is the points per game you can get for free on waivers at that position. Lower means good players are scarcer, so each one is worth more.</p>
-          <p><b>Stability r</b> measures how well a player's value one season predicts the next, from 0 (no connection, pure luck) to 1 (exactly the same). 0.5 means about half of a player's edge carries over. Keepers are a bet on next year, so higher stability means a safer keep.</p>
-        </div>
-      </article>
-      <div class="two two--even">
-        <article class="panel"><header class="panel__head"><h3>Wins above replacement by position and round <button class="info" type="button" data-tip="Average WAR of players drafted at each position within each band of rounds. n = how many players that average is based on. Hit % = share who produced half a win or more.">i</button></h3><p class="panel__sub">Non-keeper picks, 2024 and 2025 seasons</p></header><div id="bandTable"></div>
-          <p class="howto"><b>n</b> is how many drafted players the average comes from. <b>n=16</b> means 16 players. Fewer than about 10 is too few to trust. <b>Hit %</b> is the share who produced half a win or more: "52% hit" means about half of them had a top-12 type season.</p></article>
-        <article class="panel"><header class="panel__head"><h3>Does this league overdraft running backs? <button class="info" type="button" data-tip="For each drafted player: the wins he produced minus what an average pick at that spot produces. Above zero means the position returned more than the pick cost, so it was underpriced. Below zero means it was overpriced.">i</button></h3><p class="panel__sub">What each position produced minus the value of the pick spent on it</p></header><div id="rbPremium"></div></article>
-      </div>
-    </section>
-
-    <section class="section" id="k-method" aria-labelledby="kMethodTitle">
-      <div class="section__head">
-        <p class="eyebrow">09 · Show your work</p>
-        <h2 class="display" id="kMethodTitle">Method &amp; caveats</h2>
-      </div>
-      <div class="method" id="method"></div>
-    </section>
+      </section>
+      <section class="section section--band" id="k-method" aria-labelledby="kMethodTitle">
+        <h2 class="subhead" id="kMethodTitle">Method &amp; caveats</h2>
+        <div class="method" id="method"></div>
+      </section>
+    </div>
   </div>
   </main>
 
@@ -495,8 +461,8 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=12"></script>
-  <script src="js/app.js?v=12"></script>
-  <script src="js/keepers.js?v=12"></script>
+  <script src="data/site-data.js?v=13"></script>
+  <script src="js/app.js?v=13"></script>
+  <script src="js/keepers.js?v=13"></script>
 </body>
 </html>

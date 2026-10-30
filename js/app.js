@@ -43,6 +43,7 @@
   // ---------- tabs: #/page or #/page/anchor ----------
   const PAGES = ["home", "luck", "race", "trades", "keepers"];
   const LEGACY = { case: "luck", weeks: "luck", pace: "luck", road: "race", byes: "race", trades: "trades", top: "home" };
+  let lastSub = null;
   function route() {
     const h = location.hash.replace(/^#\/?/, "");
     let [p, anchor] = h.split("/");
@@ -54,9 +55,22 @@
     document.querySelectorAll("#navLinks a").forEach((a) => (a.dataset.tab === p ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
     document.title = p === "home" ? "Burdened by No Flowers" : `${document.querySelector(`#navLinks a[data-tab="${p}"]`).firstChild.textContent.trim()} · Burdened by No Flowers`;
     onScroll();
-    const target = anchor && document.getElementById(anchor);
+    // sub-tabs: #/page/sub, or #/page/element-id (shows the sub-tab that holds it)
+    const pageEl = document.querySelector(`.page[data-page="${p}"]`);
+    const subs = [...pageEl.querySelectorAll(":scope > .sub")];
+    let target = null, subKey = null;
+    if (subs.length) {
+      if (anchor && subs.some((x) => x.dataset.sub === anchor)) subKey = anchor;
+      else if (anchor && document.getElementById(anchor)) { target = document.getElementById(anchor); subKey = target.closest(".sub")?.dataset.sub; }
+      subKey = subKey || subs[0].dataset.sub;
+      subs.forEach((x) => (x.hidden = x.dataset.sub !== subKey));
+      pageEl.querySelectorAll(".subnav a").forEach((a) => (a.dataset.sub === subKey ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
+    } else if (anchor) target = document.getElementById(anchor);
+    const subChanged = subKey !== lastSub; lastSub = subKey;
+    const nav2 = pageEl.querySelector(".subnav");
     if (target) requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
     else if (changed) window.scrollTo(0, 0);
+    else if (subChanged && nav2 && nav2.getBoundingClientRect().top < 0) requestAnimationFrame(() => nav2.scrollIntoView({ block: "start" }));
     if (changed) { const h1 = document.querySelector(`.page[data-page="${p}"] h1`); if (h1) { h1.tabIndex = -1; h1.focus({ preventScroll: true }); } }
     document.dispatchEvent(new CustomEvent("pagechange", { detail: p }));
     requestAnimationFrame(() => observe());
@@ -642,10 +656,10 @@
     const a = typeof base !== "undefined" ? base.acc[cur.myRid] : null;
     const top = b ? b.filter((r) => r.surplus > 0).slice(0, 3).map((r) => r.name.split(" ").slice(-1)[0]).join(", ") : "";
     const tiles = [
-      ["luck", "01", "Bad luck", `${C.m.w}–${C.m.l} vs. ${f1(C.m.xw)} expected wins`, "All-play, the heater effect, schedule swaps and the points-against pace."],
-      ["race", "02", "Playoff race", a ? `${pct(a.po)} playoffs · ${pct(a.div)} bye` : "Season complete", "10,000 simulations, your what-if calls, and every bye week left."],
+      ["luck", "01", "Bad luck", `${C.m.w}–${C.m.l} vs. ${f1(C.m.xw)} expected wins`, "All-play, the heater effect, schedule swaps and the scoring-record chase."],
+      ["race", "02", "Playoff race", a ? `${pct(a.po)} playoffs · ${pct(a.div)} bye` : "Season complete", "Odds from 10,000 simulations, your what-if calls, and bye weeks."],
       ["trades", "03", "Trades", `${D.trades.filter((t) => t.mine).length} deals traced`, "Every deal scored, every traded pick traced to the player it became."],
-      ["keepers", "04", "Keeper Lab", top ? `Model's ${K.next} keepers: ${top}` : "Keeper value report", "Wins above replacement, what each round is worth, studs vs. steals, RB vs. WR."],
+      ["keepers", "04", "Keepers", "Who to keep in 2027", "One verdict per player, your plan for next year, and who should have been kept before."],
     ];
     $("#homeTiles").innerHTML = tiles.map(([p, n, t, stat, d]) => `<a class="tile reveal" href="#/${p}"><span class="tile__n">${n}</span><span class="tile__t">${t}</span><span class="tile__stat">${esc(stat)}</span><span class="tile__d">${d}</span><span class="tile__go" aria-hidden="true">→</span></a>`).join("");
   })();
