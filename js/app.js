@@ -443,6 +443,81 @@
   }
 
   const base = simulate(10000, {});
+
+  // ---------- the playoff line: odds by record for every team, and what moves the cutoff ----------
+  (function playoffLine() {
+    if (!remaining.length || !document.getElementById("line")) return;
+    const ids = cur.teams.map((t) => t.rid), N = 12000, G = cur.regEnd, slots = cur.playoffTeams;
+    const byW = {}, team = Object.fromEntries(ids.map((r) => [r, { po: 0, w: {} }])), cutW = {};
+    const top = {}, bottom = {};
+    for (let n = 0; n < N; n++) {
+      const W = {}, PF = {};
+      cur.teams.forEach((t) => { W[t.rid] = t.w; PF[t.rid] = t.pf; });
+      for (const wk of remaining) for (const [a, b] of wk.pairs) {
+        const pa = proj(a, wk.week) + randn() * sd, pb = proj(b, wk.week) + randn() * sd;
+        PF[a] += pa; PF[b] += pb; if (pa > pb) W[a]++; else W[b]++;
+      }
+      const cmp = (x, y) => W[y] - W[x] || PF[y] - PF[x];
+      const divW = [1, 2].map((d) => ids.filter((r) => tm(cur, r).div === d).sort(cmp)[0]);
+      const rest = ids.filter((r) => !divW.includes(r)).sort(cmp);
+      const po = new Set([...divW, ...rest.slice(0, slots - 2)]);
+      const last = rest[slots - 3];
+      cutW[W[last]] = (cutW[W[last]] || 0) + 1;
+      const sorted = ids.map((r) => W[r]).sort((a, b) => b - a);
+      const t2 = sorted[0] + sorted[1], b2 = sorted[ids.length - 1] + sorted[ids.length - 2];
+      ids.forEach((r) => {
+        const k = W[r], a = (byW[k] = byW[k] || [0, 0]); a[0] += po.has(r); a[1]++;
+        const tw = (team[r].w[k] = team[r].w[k] || [0, 0]); tw[0] += po.has(r); tw[1]++;
+        if (po.has(r)) team[r].po++;
+        if (k === 6) {
+          const x = (top[t2] = top[t2] || [0, 0]); x[0] += po.has(r); x[1]++;
+          const y = (bottom[b2] = bottom[b2] || [0, 0]); y[0] += po.has(r); y[1]++;
+        }
+      });
+    }
+    const rec = (k) => `${k}–${G - k}`;
+    const p6 = byW[6] ? byW[6][0] / byW[6][1] : 0, p7 = byW[7] ? byW[7][0] / byW[7][1] : 0;
+    const cutMode = Object.entries(cutW).sort((a, b) => b[1] - a[1])[0];
+    const bar = (p, cls = "") => `<span class="lbar ${cls}"><i style="width:${Math.round(p * 100)}%"></i></span>`;
+
+    $("#lineLede").innerHTML = `Ten teams, ${G} games each: ${G * ids.length / 2} wins get handed out, so the league averages exactly ${rec(G / 2)}. Six teams get in. This plays the last ${remaining.length} weeks out ${N.toLocaleString()} times, with every team projected from how it has <i>scored</i> so far, not its record. That gives teams like yours, scoring well but losing, the credit they've earned.`;
+    $("#lineCards").innerHTML = [
+      ["gold", "A 7–7 team gets in", pct(p7), "of the time, any team"],
+      ["red", "A 6–8 team gets in", pct(p6), "of the time, any team"],
+      ["", "Most likely line", rec(+cutMode[0]), `the 6th seed's record in ${pct(cutMode[1] / N)} of seasons`],
+    ].map(([c, k, v, t]) => `<article class="card ${c ? "card--" + c : ""}"><p class="card__k">${k}</p><p class="card__v">${v}</p><p class="card__t">${t}</p></article>`).join("");
+
+    const ks = Object.keys(byW).map(Number).filter((k) => byW[k][1] > N * ids.length * 0.005).sort((a, b) => a - b);
+    $("#lineByRecord").innerHTML = `<div class="lrows">${ks.map((k) => { const p = byW[k][0] / byW[k][1]; return `<div class="lrow"><b>${rec(k)}</b>${bar(p, p >= 0.9 ? "hi" : p < 0.2 ? "lo" : "")}<span>${pct(p)}</span></div>`; }).join("")}</div>`;
+    const cks = Object.keys(cutW).map(Number).sort((a, b) => a - b);
+    $("#lineCut").innerHTML = `<div class="lrows">${cks.map((k) => `<div class="lrow"><b>${rec(k)}</b>${bar(cutW[k] / N)}<span>${pct(cutW[k] / N)}</span></div>`).join("")}</div>`;
+
+    // history: who was last in and first out
+    const hist = D.seasons.filter((s) => s.weeksDone >= s.regEnd).map((s) => {
+      const T = Object.fromEntries(s.teams.map((t) => [t.rid, t])), key = (x, y) => T[y].w - T[x].w || T[y].pf - T[x].pf, I = Object.keys(T).map(Number);
+      const dw = [1, 2].map((dv) => I.filter((r) => T[r].div === dv).sort(key)[0]);
+      const rest = I.filter((r) => !dw.includes(r)).sort(key);
+      const lastIn = T[rest[s.playoffTeams - 3]], firstOut = T[rest[s.playoffTeams - 2]];
+      const w = I.map((r) => T[r].w).sort((a, b) => b - a);
+      return `<b>${s.season}:</b> last in ${esc(lastIn.name)} at ${lastIn.w}–${lastIn.l}; first out ${esc(firstOut.name)} at ${firstOut.w}–${firstOut.l}${lastIn.w === firstOut.w ? " (on points)" : ""}. Top two won ${w[0] + w[1]}, bottom two ${w[w.length - 1] + w[w.length - 2]}.`;
+    });
+    $("#lineHistory").innerHTML = `What actually happened: ${hist.join(" ")}`;
+
+    // per-team table
+    const rows = [...cur.teams].sort((a, b) => team[b.rid].po - team[a.rid].po);
+    const cond = (r, k) => { const x = team[r].w[k]; return x && x[1] >= 50 ? pct(x[0] / x[1]) : "–"; };
+    $("#lineTeams").innerHTML = `<table><thead><tr><th>Team</th><th class="n">Now</th><th class="n">Points/wk</th><th class="n">Model pts/wk</th><th class="n">If 6–8</th><th class="n">If 7–7</th><th class="n">Playoffs overall</th></tr></thead><tbody>${rows.map((t) => `<tr class="${t.rid === myRid ? "is-me" : ""}"><td>${tname(t)}</td><td class="n">${t.w}–${t.l}</td><td class="n">${f1(t.avg)}</td><td class="n">${f1(model[t.rid])}</td><td class="n">${cond(t.rid, 6)}</td><td class="n">${cond(t.rid, 7)}</td><td class="n"><b>${pct(team[t.rid].po / N)}</b></td></tr>`).join("")}</tbody></table><p class="howto" style="padding:0 16px 16px">"–" means that team almost never finishes with that record. "Model pts/wk" is the scoring rate the simulation uses: each team's average, pulled a little toward the league average.</p>`;
+
+    // parity: how the top and bottom move a 6-8 team's chances
+    const bucket = (obj) => Object.keys(obj).map(Number).sort((a, b) => a - b).filter((k) => obj[k][1] >= 150);
+    const rowsOf = (obj, label) => `<div class="lrows">${bucket(obj).map((k) => { const p = obj[k][0] / obj[k][1]; return `<div class="lrow"><b>${label(k)}</b>${bar(p, p >= 0.3 ? "hi" : "")}<span>${pct(p)}</span></div>`; }).join("")}</div>`;
+    $("#parityTop").innerHTML = rowsOf(top, (k) => `${k} wins`);
+    $("#parityBottom").innerHTML = rowsOf(bottom, (k) => `${k} wins`);
+    const tk = bucket(top), bk = bucket(bottom);
+    const pr = (o, k) => (o[k] ? o[k][0] / o[k][1] : 0);
+    const bVals = bk.map((k) => pr(bottom, k)), bSpread = Math.max(...bVals) - Math.min(...bVals);
+    $("#parityLede").innerHTML = `Wins are a fixed pie: every win one team takes is a loss for someone else. A 6–8 team gets in when the 7–7 crowd is thin, and that mostly comes down to <b>the top</b>. When the top two teams finish with ${tk[tk.length - 1]} wins between them, a 6–8 team gets in ${pct(pr(top, tk[tk.length - 1]))} of the time; when they take only ${tk[0]}, it's ${pct(pr(top, tk[0]))}. Those extra wins come out of the middle, so fewer teams reach 7–7. ${bSpread < 0.1 ? `The bottom barely matters (${pct(Math.min(...bVals))} to ${pct(Math.max(...bVals))}), because wins the worst teams give away get spread across everyone.` : `The bottom matters too: anywhere from ${pct(Math.min(...bVals))} to ${pct(Math.max(...bVals))}.`} So <b>parity hurts a 6–8 team</b>: an even league piles teams up at 7–7, while one or two runaway teams leave room at 6–8. That's what happened in 2024, when a 6–8 team got in on points. Either way, at 6–8 it comes down to points scored, which is where you have the edge.`;
+  })();
   let lastRun = base;
 
   function renderSim() {

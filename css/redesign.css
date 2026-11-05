@@ -110,3 +110,13 @@
   .krow { padding: 12px 14px; gap: 6px 12px; }
   .krow__gain { grid-column: 2 / -1; max-width: none; grid-template-columns: minmax(0, 220px) auto; justify-content: start; }
 }
+
+/* playoff line */
+.lrows { display: grid; gap: 8px; }
+.lrow { display: grid; grid-template-columns: 64px 1fr 52px; gap: 12px; align-items: center; font-size: 15px; }
+.lrow b { font-family: var(--f-label); font-size: 16px; font-variant-numeric: tabular-nums; }
+.lrow span:last-child { font-family: var(--f-label); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.lbar { height: 14px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+.lbar i { display: block; height: 100%; background: var(--ink); }
+.lbar.hi i { background: var(--gold); }
+.lbar.lo i { background: var(--accent); }

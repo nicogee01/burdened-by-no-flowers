@@ -10,10 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=13" />
-  <link rel="stylesheet" href="css/lab.css?v=13" />
-  <link rel="stylesheet" href="css/lab-tools.css?v=13" />
-  <link rel="stylesheet" href="css/redesign.css?v=13" />
+  <link rel="stylesheet" href="css/styles.css?v=14" />
+  <link rel="stylesheet" href="css/lab.css?v=14" />
+  <link rel="stylesheet" href="css/lab-tools.css?v=14" />
+  <link rel="stylesheet" href="css/redesign.css?v=14" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -192,7 +192,7 @@
 
   <div class="page" data-page="race" hidden>
     <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 2 · The only way out</p><h1 class="page-hero__title">Playoff <em>race</em></h1><p class="page-hero__sub">Simulated odds, the division path to a bye, and every bye week left on the schedule.</p></div></header>
-    <nav class="subnav" aria-label="Sections"><a href="#/race/odds" data-sub="odds">Playoff odds</a><a href="#/race/byes" data-sub="byes">Bye weeks</a></nav>
+    <nav class="subnav" aria-label="Sections"><a href="#/race/odds" data-sub="odds">Playoff odds</a><a href="#/race/line" data-sub="line">The playoff line</a><a href="#/race/byes" data-sub="byes">Bye weeks</a></nav>
     <div class="sub" data-sub="odds">
     <!-- ===== ROAD TO THE BYE ===== -->
     <section class="section" id="road" aria-labelledby="roadTitle">
@@ -236,6 +236,44 @@
       </article>
     </section>
 
+    </div>
+    <div class="sub" data-sub="line" hidden>
+    <section class="section" id="line" aria-labelledby="lineTitle">
+      <h2 class="subhead" id="lineTitle" style="margin-top:0">Where's the playoff line?</h2>
+      <p class="howto" id="lineLede"></p>
+      <div class="cards" id="lineCards" style="margin-top:16px"></div>
+
+      <div class="two two--even" style="margin-top:16px">
+        <article class="panel">
+          <header class="panel__head"><h3>Odds of making it, by final record</h3><p class="panel__sub">Every team, every simulated season</p></header>
+          <div id="lineByRecord"></div>
+          <p class="howto">Two teams with the same record are split by points scored (unless one wins the division), so a high-scoring 6–8 team has a much better shot than a low-scoring one.</p>
+        </article>
+        <article class="panel">
+          <header class="panel__head"><h3>Where the last spot lands</h3><p class="panel__sub">Record of the 6th seed across all simulations</p></header>
+          <div id="lineCut"></div>
+          <p class="howto" id="lineHistory"></p>
+        </article>
+      </div>
+
+      <article class="panel">
+        <header class="panel__head"><h3>Every team: what each record would mean</h3><p class="panel__sub">Odds of making the playoffs if that team finishes 6–8 or 7–7, plus its odds overall. Teams are projected from how they've actually scored, not their records.</p></header>
+        <div class="table-wrap" id="lineTeams"></div>
+      </article>
+
+      <h2 class="subhead">Does parity help a 6–8 team, or hurt it?</h2>
+      <p class="howto" id="parityLede"></p>
+      <div class="two two--even" style="margin-top:16px">
+        <article class="panel">
+          <header class="panel__head"><h3>6–8 teams get in more when the top is dominant</h3><p class="panel__sub">Chance a 6–8 team makes it, by how many wins the top two teams finish with</p></header>
+          <div id="parityTop"></div>
+        </article>
+        <article class="panel">
+          <header class="panel__head"><h3>The bottom matters much less</h3><p class="panel__sub">Chance a 6–8 team makes it, by how many wins the bottom two teams finish with</p></header>
+          <div id="parityBottom"></div>
+        </article>
+      </div>
+    </section>
     </div>
     <div class="sub" data-sub="byes" hidden>
     <!-- ===== BYES ===== -->
@@ -461,8 +499,8 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=13"></script>
-  <script src="js/app.js?v=13"></script>
-  <script src="js/keepers.js?v=13"></script>
+  <script src="data/site-data.js?v=14"></script>
+  <script src="js/app.js?v=14"></script>
+  <script src="js/keepers.js?v=14"></script>
 </body>
 </html>
