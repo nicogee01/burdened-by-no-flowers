@@ -444,6 +444,88 @@
 
   const base = simulate(10000, {});
 
+  // ---------- pick 'em: choose any remaining game, watch the standings move ----------
+  (function pickem() {
+    if (!remaining.length || !document.getElementById("pickem")) return;
+    const ids = cur.teams.map((t) => t.rid), slots = cur.playoffTeams;
+    const key = (w, a, b) => `${cur.season}:${w}:${Math.min(a, b)}-${Math.max(a, b)}`;
+    let picks = {};
+    try { picks = JSON.parse(localStorage.getItem("bbnf:pickem") || "{}"); } catch { picks = {}; }
+    const save = () => { try { localStorage.setItem("bbnf:pickem", JSON.stringify(picks)); } catch { /* private mode */ } };
+    const winP = (a, b, w) => { const z = (proj(a, w) - proj(b, w)) / (sd * Math.SQRT2); return 0.5 * (1 + erf(z)); };
+
+    function run(N) {
+      const acc = Object.fromEntries(ids.map((r) => [r, { po: 0, bye: 0, w: 0, pf: 0, seed: Array(slots + 1).fill(0) }]));
+      for (let n = 0; n < N; n++) {
+        const W = {}, PF = {};
+        cur.teams.forEach((t) => { W[t.rid] = t.w; PF[t.rid] = t.pf; });
+        for (const wk of remaining) for (const [a, b] of wk.pairs) {
+          let pa = proj(a, wk.week) + randn() * sd, pb = proj(b, wk.week) + randn() * sd;
+          const pick = picks[key(wk.week, a, b)];
+          if (pick && (pick === a) !== (pa > pb)) { const t = pa; pa = pb; pb = t; }
+          PF[a] += pa; PF[b] += pb; if (pa > pb) W[a]++; else W[b]++;
+        }
+        const cmp = (x, y) => W[y] - W[x] || PF[y] - PF[x];
+        const divW = [1, 2].map((d) => ids.filter((r) => tm(cur, r).div === d).sort(cmp)[0]).sort(cmp);
+        const rest = ids.filter((r) => !divW.includes(r)).sort(cmp);
+        [...divW, ...rest.slice(0, slots - 2)].forEach((r, i) => { acc[r].po++; acc[r].seed[i + 1]++; if (i < 2) acc[r].bye++; });
+        ids.forEach((r) => { acc[r].w += W[r]; acc[r].pf += PF[r]; });
+      }
+      ids.forEach((r) => { const a = acc[r]; a.po /= N; a.bye /= N; a.w /= N; a.pf /= N; });
+      return acc;
+    }
+
+    function renderGames() {
+      $("#pkGames").innerHTML = remaining.map((wk) => `
+        <article class="pk-week">
+          <header><b>Week ${wk.week}</b><small>${wk.pairs.filter(([a, b]) => picks[key(wk.week, a, b)]).length}/${wk.pairs.length} picked</small></header>
+          ${wk.pairs.map(([a, b]) => {
+            const ta = tm(cur, a), tb = tm(cur, b), p = winP(a, b, wk.week), k = key(wk.week, a, b), pick = picks[k];
+            const mine = a === myRid || b === myRid, div = ta.div === tb.div;
+            const side = (t, chance, on) => `<button type="button" class="pk-team ${on ? "on" : ""} ${pick && !on ? "off" : ""}" data-k="${k}" data-w="${t.rid}" aria-pressed="${on}">${avatar(t)}<span class="pk-name">${esc(t.name)}<small>${t.w}–${t.l} · ${Math.round(chance * 100)}%</small></span></button>`;
+            return `<div class="pk-game ${mine ? "is-mine" : ""}">
+              ${side(ta, p, pick === a)}
+              <button type="button" class="pk-sim ${pick ? "" : "on"}" data-k="${k}" data-w="" aria-label="Leave this game simulated">${div ? '<span class="tag">Div</span>' : ""}Sim</button>
+              ${side(tb, 1 - p, pick === b)}
+            </div>`;
+          }).join("")}
+        </article>`).join("");
+    }
+
+    function renderStand() {
+      const acc = run(4000);
+      const picked = Object.keys(picks).filter((k) => k.startsWith(cur.season + ":")).length, total = remaining.reduce((a, w) => a + w.pairs.length, 0);
+      // locked record = current + games you've picked for them; ranges show what's still open
+      const lock = Object.fromEntries(ids.map((r) => [r, { w: tm(cur, r).w, l: tm(cur, r).l, open: 0 }]));
+      for (const wk of remaining) for (const [a, b] of wk.pairs) {
+        const p = picks[key(wk.week, a, b)];
+        if (!p) { lock[a].open++; lock[b].open++; continue; }
+        lock[p].w++; lock[p === a ? b : a].l++;
+      }
+      const order = [...ids].sort((x, y) => acc[y].po - acc[x].po || acc[y].w - acc[x].w);
+      const seedOf = (r) => { const s = acc[r].seed; let best = 0; for (let i = 1; i <= slots; i++) if (s[i] > s[best]) best = i; return best && s[best] / 4000 > 0.3 ? best : null; };
+      $("#pkStandSub").textContent = `${picked} of ${total} games picked · unpicked games simulated 4,000 times · ties broken by points scored`;
+      $("#pkStand").innerHTML = `<table><thead><tr><th>Team</th><th class="n">Record</th><th class="n">Bye</th><th class="n">Playoffs</th></tr></thead><tbody>${order.map((r, i) => {
+        const t = tm(cur, r), L = lock[r], a = acc[r], sd_ = seedOf(r);
+        const recTxt = L.open ? `${L.w}–${L.l}<small> +${L.open} open</small>` : `<b>${L.w}–${L.l}</b>`;
+        return `<tr class="${r === myRid ? "is-me" : ""} ${i === slots - 1 ? "cut" : ""}"><td>${tname(t)}${sd_ ? `<small class="pk-seed">likely ${ord(sd_)} seed</small>` : ""}</td><td class="n">${recTxt}<br><small class="muted">proj ${f1(a.w)}–${f1(cur.regEnd - a.w)}</small></td><td class="n">${pct(a.bye)}</td><td class="n"><b>${pct(a.po)}</b><span class="pbar"><i style="width:${a.po * 100}%"></i></span></td></tr>`;
+      }).join("")}</tbody></table>`;
+    }
+
+    function renderAll() { renderGames(); renderStand(); }
+    $("#pkLede").innerHTML = `Pick a winner for any game, or leave it on <b>Sim</b>. The percentage on each side is the model's win chance, from each team's scoring so far (adjusted for bye weeks). The table on the right updates with every pick. Your games are highlighted and division games are tagged. Picks are saved in this browser.`;
+    $("#pkGames").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-k]"); if (!b) return;
+      if (b.dataset.w) { const w = +b.dataset.w; if (picks[b.dataset.k] === w) delete picks[b.dataset.k]; else picks[b.dataset.k] = w; }
+      else delete picks[b.dataset.k];
+      save(); renderAll();
+    });
+    $("#pkFav").addEventListener("click", () => { for (const wk of remaining) for (const [a, b] of wk.pairs) picks[key(wk.week, a, b)] = winP(a, b, wk.week) >= 0.5 ? a : b; save(); renderAll(); });
+    $("#pkMine").addEventListener("click", () => { for (const wk of remaining) for (const [a, b] of wk.pairs) if (a === myRid || b === myRid) picks[key(wk.week, a, b)] = myRid; save(); renderAll(); });
+    $("#pkReset").addEventListener("click", () => { picks = {}; save(); renderAll(); });
+    renderAll();
+  })();
+
   // ---------- the playoff line: odds by record for every team, and what moves the cutoff ----------
   (function playoffLine() {
     if (!remaining.length || !document.getElementById("line")) return;

@@ -120,3 +120,32 @@
 .lbar i { display: block; height: 100%; background: var(--ink); }
 .lbar.hi i { background: var(--gold); }
 .lbar.lo i { background: var(--accent); }
+
+/* pick 'em */
+.pk-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.pk-actions .btn-ghost { min-height: 40px; }
+.pk-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); gap: 16px; align-items: start; margin-top: 16px; }
+@media (max-width: 960px) { .pk-layout { grid-template-columns: 1fr; } .pk-side { order: -1; } }
+.pk-side { position: sticky; top: calc(var(--nav-h) + 70px); }
+@media (max-width: 960px) { .pk-side { position: static; } }
+.pk-stand { margin: 0; }
+.pk-stand td small { color: var(--faint); font-size: 12px; }
+.pk-seed { display: block; color: var(--faint); font-size: 12px; margin-left: 34px; }
+.pk-games { display: grid; gap: 12px; }
+.pk-week { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; }
+.pk-week header { display: flex; justify-content: space-between; align-items: baseline; padding: 2px 4px 10px; font-family: var(--f-label); font-size: 18px; letter-spacing: 0.06em; text-transform: uppercase; }
+.pk-week header small { font-size: 13px; color: var(--faint); letter-spacing: 0.04em; }
+.pk-game { display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); gap: 6px; padding: 4px 0; }
+.pk-game + .pk-game { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+.pk-game.is-mine { background: rgba(200, 16, 46, 0.06); border-radius: 10px; padding: 6px; }
+.pk-team { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 6px 10px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--bg); text-align: left; min-width: 0; transition: background 160ms, border-color 160ms, opacity 160ms; }
+.pk-team:hover { border-color: var(--ink); }
+.pk-team.on { background: var(--ink); color: #fbf7ee; border-color: var(--ink); }
+.pk-team.on small { color: #e6c47a; }
+.pk-team.off { opacity: 0.45; }
+.pk-name { display: grid; min-width: 0; font-weight: 600; font-size: 14px; line-height: 1.2; }
+.pk-name small { font-weight: 500; font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.pk-name, .pk-name small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-sim { display: grid; place-items: center; gap: 2px; border: 1px dashed var(--line-2); border-radius: 10px; background: none; font-family: var(--f-label); font-weight: 700; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); min-height: 48px; }
+.pk-sim.on { border-style: solid; border-color: var(--gold); color: var(--gold); background: rgba(230, 196, 122, 0.12); }
+.pk-sim .tag { margin: 0; font-size: 10px; padding: 0 5px; }

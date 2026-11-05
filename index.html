@@ -10,10 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=14" />
-  <link rel="stylesheet" href="css/lab.css?v=14" />
-  <link rel="stylesheet" href="css/lab-tools.css?v=14" />
-  <link rel="stylesheet" href="css/redesign.css?v=14" />
+  <link rel="stylesheet" href="css/styles.css?v=15" />
+  <link rel="stylesheet" href="css/lab.css?v=15" />
+  <link rel="stylesheet" href="css/lab-tools.css?v=15" />
+  <link rel="stylesheet" href="css/redesign.css?v=15" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -192,7 +192,7 @@
 
   <div class="page" data-page="race" hidden>
     <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 2 · The only way out</p><h1 class="page-hero__title">Playoff <em>race</em></h1><p class="page-hero__sub">Simulated odds, the division path to a bye, and every bye week left on the schedule.</p></div></header>
-    <nav class="subnav" aria-label="Sections"><a href="#/race/odds" data-sub="odds">Playoff odds</a><a href="#/race/line" data-sub="line">The playoff line</a><a href="#/race/byes" data-sub="byes">Bye weeks</a></nav>
+    <nav class="subnav" aria-label="Sections"><a href="#/race/odds" data-sub="odds">Playoff odds</a><a href="#/race/line" data-sub="line">The playoff line</a><a href="#/race/pickem" data-sub="pickem">Pick 'em</a><a href="#/race/byes" data-sub="byes">Bye weeks</a></nav>
     <div class="sub" data-sub="odds">
     <!-- ===== ROAD TO THE BYE ===== -->
     <section class="section" id="road" aria-labelledby="roadTitle">
@@ -272,6 +272,28 @@
           <header class="panel__head"><h3>The bottom matters much less</h3><p class="panel__sub">Chance a 6–8 team makes it, by how many wins the bottom two teams finish with</p></header>
           <div id="parityBottom"></div>
         </article>
+      </div>
+    </section>
+    </div>
+    <div class="sub" data-sub="pickem" hidden>
+    <section class="section" id="pickem" aria-labelledby="pickTitle">
+      <div class="section__head section__head--row" style="margin-bottom:12px">
+        <h2 class="subhead" id="pickTitle" style="margin:0">Pick 'em</h2>
+        <div class="pk-actions">
+          <button type="button" class="btn-ghost" id="pkFav">Pick all favorites</button>
+          <button type="button" class="btn-ghost" id="pkMine">I win out</button>
+          <button type="button" class="btn-ghost" id="pkReset">Reset</button>
+        </div>
+      </div>
+      <p class="howto" id="pkLede" style="margin-top:0"></p>
+      <div class="pk-layout">
+        <div class="pk-games" id="pkGames"></div>
+        <aside class="pk-side">
+          <article class="panel pk-stand">
+            <header class="panel__head"><h3>Projected standings</h3><p class="panel__sub" id="pkStandSub"></p></header>
+            <div class="table-wrap" id="pkStand"></div>
+          </article>
+        </aside>
       </div>
     </section>
     </div>
@@ -499,8 +521,8 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=14"></script>
-  <script src="js/app.js?v=14"></script>
-  <script src="js/keepers.js?v=14"></script>
+  <script src="data/site-data.js?v=15"></script>
+  <script src="js/app.js?v=15"></script>
+  <script src="js/keepers.js?v=15"></script>
 </body>
 </html>
