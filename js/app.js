@@ -13,6 +13,13 @@
   const cur = D.seasons[D.seasons.length - 1];
   const tm = (s, rid) => s.teams.find((t) => t.rid === +rid);
   const me = (s) => tm(s, s.myRid);
+  const SITE = (me(cur) && me(cur).name) || "Fugazi Comeback";
+  (function siteName() {
+    const [first, ...rest] = SITE.split(" ");
+    const html = rest.length ? `${esc(first)} <em>${esc(rest.join(" "))}</em>` : `<em>${esc(SITE)}</em>`;
+    ["#brandWord", "#footWord"].forEach((sel) => { const el = document.querySelector(sel); if (el) el.innerHTML = html; });
+    document.title = SITE;
+  })();
   const avatar = (t) => (t && t.avatar ? `<img class="av" src="${esc(t.avatar)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'av'}))">` : `<span class="av"></span>`);
   const tname = (t) => `<span class="tname">${avatar(t)}<span>${esc(t ? t.name : "?")}</span></span>`;
   const rankBy = (s, key, rid, desc = true) => 1 + s.teams.filter((t) => (desc ? t[key] > tm(s, rid)[key] : t[key] < tm(s, rid)[key])).length;
@@ -53,7 +60,7 @@
     page = p;
     document.querySelectorAll(".page").forEach((el) => (el.hidden = el.dataset.page !== p));
     document.querySelectorAll("#navLinks a").forEach((a) => (a.dataset.tab === p ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
-    document.title = p === "home" ? "Burdened by No Flowers" : `${document.querySelector(`#navLinks a[data-tab="${p}"]`).firstChild.textContent.trim()} · Burdened by No Flowers`;
+    document.title = p === "home" ? SITE : `${document.querySelector(`#navLinks a[data-tab="${p}"]`).firstChild.textContent.trim()} · ${SITE}`;
     onScroll();
     // sub-tabs: #/page/sub, or #/page/element-id (shows the sub-tab that holds it)
     const pageEl = document.querySelector(`.page[data-page="${p}"]`);
@@ -105,7 +112,7 @@
   (function hero() {
     const m = C.m;
     $("#heroEyebrow").textContent = `${cur.name} · ${cur.divisions[m.div]} · ${cur.season} week ${cur.weeksDone}`;
-    $("#heroTitle").innerHTML = `<span class="line"><span>${m.w}&ndash;${m.l}.</span></span><span class="line"><span><em>No flowers.</em></span></span>`;
+    $("#heroTitle").innerHTML = `<span class="line"><span>${m.w}&ndash;${m.l}.</span></span><span class="line"><span><em>Still robbed.</em></span></span>`;
     $("#heroSub").textContent = `${m.name} has scored ${f0(m.pf)} points in ${cur.season}, ${C.pfRank === 1 ? "the most in the league" : `${ord(C.pfRank)} in the league`}, and has had ${f0(m.pa)} scored against it, ${C.paRank === 1 ? (C.pfRank === 1 ? "also the most in the league" : "the most in the league") : `${ord(C.paRank)}-most in the league`}. This site exists so its manager can prove they are not going insane.`;
     $("#sbSeason").textContent = `${cur.season} season · through week ${cur.weeksDone}`;
     $("#sbGrid").innerHTML = [
