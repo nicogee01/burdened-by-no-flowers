@@ -253,3 +253,8 @@
 .cmp-pos li { display: grid; grid-template-columns: 44px 1fr; column-gap: 8px; }
 .cmp-pos li small { grid-column: 2; color: var(--faint); font-size: 12px; }
 .cmp-role { grid-row: 1 / 3; font-family: var(--f-label); font-weight: 700; font-size: 13px; color: var(--accent); padding-top: 2px; }
+
+.cmp-table td small.cmp-who { color: var(--muted); }
+
+.cmp-table .cmp-name { display: block; font-weight: 700; font-size: 15px; }
+.cmp-table td strong { color: var(--ink); }

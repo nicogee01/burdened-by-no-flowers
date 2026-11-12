@@ -16,8 +16,7 @@
   if (!byKey[A]) A = key(rec);
   if (!byKey[Bk]) Bk = meNow ? key(meNow) : key(T[0]);
 
-  const ROLES = ["QB", "RB1", "RB2", "RB3", "WR1", "WR2", "WR3", "WR4", "TE1", "TE2", "K", "DEF"];
-  const GROUPS = ["QB", "RB", "WR", "TE", "K", "DEF"];
+    const GROUPS = ["QB", "RB", "WR", "TE", "K", "DEF"];
   const label = (t) => `${t.season} · ${t.name} (${t.w}–${t.l})${t.partial ? " · in progress" : ""}`;
   const fin = (f, pos) => (f ? `${pos === "DEF" ? "DST" : pos}${f.rank}` : "–");
   const placeTxt = (t) => (t.partial ? `in progress (${t.weeks} wks)` : t.place ? `finished ${ord(t.place)}` : "missed playoffs");
@@ -40,16 +39,25 @@
     $("#cmpA").value = A; $("#cmpB").value = Bk;
     $("#cmpHeads").innerHTML = head(a, "a") + `<div class="cmp-vs" aria-hidden="true">vs</div>` + head(b, "b");
 
-    // lineup roles
-    const roles = ROLES.filter((r) => (a.roles[r] && a.roles[r].used >= 2) || (b.roles[r] && b.roles[r].used >= 2));
-    const maxD = Math.max(3, ...roles.map((r) => Math.abs((a.roles[r]?.avg || 0) - (b.roles[r]?.avg || 0))));
-    const cell = (t, r) => { const x = t.roles[r]; return x ? `<b>${f1(x.avg)}</b><small>#${x.rank} of ${T.filter((y) => y.season === t.season).length} that year${x.used < t.weeks ? ` · used ${x.used}/${t.weeks} wks` : ""}</small>` : `<b>–</b>`; };
+    // season lineup: each slot is one player, the team's best at that position over the season
+    const slotsOf = (t) => (t.lineup || []).map((x) => x.slot);
+    const roles = [...new Set([...slotsOf(a), ...slotsOf(b)])];
+    const pick = (t, r) => ((t.lineup || []).find((x) => x.slot === r) || {}).player;
+    const maxD = Math.max(3, ...roles.map((r) => Math.abs((pick(a, r)?.avg || 0) - (pick(b, r)?.avg || 0))));
+    const posLbl = (p) => (p.pos === "DEF" ? "DST" : p.pos);
+    const cell = (t, r) => {
+      const p = pick(t, r);
+      if (!p) return "<b>–</b><small>nobody</small>";
+      return `<span class="cmp-name">${esc(p.name)}</span><b>${f1(p.avg)}</b><small>${p.finish ? `finished <strong>${posLbl(p)}${p.finish.rank}</strong> in the league` : "not enough games to rank"} · ${p.starts} start${p.starts === 1 ? "" : "s"}</small>`;
+    };
+    const total = (t) => roles.reduce((s, r) => s + (pick(t, r)?.avg || 0), 0);
+    const ta = total(a), tb = total(b);
     $("#cmpRoles").innerHTML = `<table class="cmp-table"><thead><tr><th>Slot</th><th class="n">${esc(a.name)} '${a.season.slice(2)}</th><th class="cmp-diffh">Edge</th><th>${esc(b.name)} '${b.season.slice(2)}</th></tr></thead><tbody>${roles.map((r) => {
-      const va = a.roles[r]?.avg || 0, vb = b.roles[r]?.avg || 0, d = vb - va, w = (Math.abs(d) / maxD) * 50;
-      return `<tr><th scope="row">${r}</th><td class="n">${cell(a, r)}</td><td class="cmp-diff"><span class="cmp-bar"><i class="${d >= 0 ? "b" : "a"}" style="width:${w}%"></i></span><small>${Math.abs(d) < 0.05 ? "even" : `${d > 0 ? "B" : "A"} +${f1(Math.abs(d))}`}</small></td><td>${cell(b, r)}</td></tr>`;
+      const va = pick(a, r)?.avg || 0, vb = pick(b, r)?.avg || 0, d = vb - va, w = (Math.abs(d) / maxD) * 50;
+      return `<tr><th scope="row">${r === "DEF" ? "D/ST" : r}</th><td class="n">${cell(a, r)}</td><td class="cmp-diff"><span class="cmp-bar"><i class="${d >= 0 ? "b" : "a"}" style="width:${w}%"></i></span><small>${Math.abs(d) < 0.05 ? "even" : `${d > 0 ? "B" : "A"} +${f1(Math.abs(d))}`}</small></td><td>${cell(b, r)}</td></tr>`;
     }).join("")}
-      <tr class="cmp-total"><th scope="row">Total</th><td class="n"><b>${f1(a.ppg)}</b></td><td class="cmp-diff"><small>${a.ppg === b.ppg ? "even" : `${b.ppg > a.ppg ? "B" : "A"} +${f1(Math.abs(b.ppg - a.ppg))}`}</small></td><td><b>${f1(b.ppg)}</b></td></tr></tbody></table>
-      <p class="howto">Each week the starters are sorted by points within each position: the higher-scoring RB that week counts as RB1, the other as RB2, and an RB in a flex spot as RB3. Averages are per week played (a week without that slot counts as zero). "#1 of 10" is the slot's rank among that season's teams.</p>`;
+      <tr class="cmp-total"><th scope="row">Lineup</th><td class="n"><b>${f1(ta)}</b><small>actual: ${f1(a.ppg)} pts/wk</small></td><td class="cmp-diff"><small>${Math.abs(tb - ta) < 0.05 ? "even" : `${tb > ta ? "B" : "A"} +${f1(Math.abs(tb - ta))}`}</small></td><td><b>${f1(tb)}</b><small>actual: ${f1(b.ppg)} pts/wk</small></td></tr></tbody></table>
+      <p class="howto">Your league's lineup: QB, RB, RB, WR, WR, TE, FLEX, FLEX, K, D/ST. Each slot is one player for the whole season: the team's best player at that position, by points scored as a starter <i>for that team</i>. WR1 is their top receiver, WR2 the next, and the flex spots go to the best RB/WR/TE left over. The number is his points per game as a starter. "Finished WR3" is where he ranked among every receiver in the league that year by points per game. "Lineup" adds up those per-game numbers, a full-strength week; "actual" is what the team really averaged with injuries, byes and lineup choices.</p>`;
 
     // depth charts
     const depth = (t) => GROUPS.map((pos) => {
