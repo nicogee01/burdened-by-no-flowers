@@ -8,6 +8,7 @@ import json, os, statistics, sys, time, urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import keepers  # noqa: E402
 import research  # noqa: E402
+import compare  # noqa: E402
 
 LEAGUE_ID = "1367213857868627968"
 ME = "1169397187500027904"  # nicog01
@@ -305,6 +306,11 @@ def main():
                        "teamBye": bye_of, "rosters": rosters}
 
     out["keepers"] = keepers.build(seasons, players, ME, pinfo)
+    try:
+        out["compare"] = compare.build(seasons, players, ME)
+    except Exception as e:
+        print("compare data skipped:", e)
+        out["compare"] = None
     try:
         out["research"] = research.build(get_url, cur_s["league"], cur_s["rosters"], cur_s["users"], players, ME)
     except Exception as e:  # research data is a bonus; never block the main refresh
