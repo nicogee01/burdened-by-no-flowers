@@ -48,7 +48,7 @@
   window.addEventListener("scroll", onScroll, { passive: true });
 
   // ---------- tabs: #/page or #/page/anchor ----------
-  const PAGES = ["home", "luck", "race", "trades", "keepers"];
+  const PAGES = ["home", "luck", "race", "trades", "keepers", "research"];
   const LEGACY = { case: "luck", weeks: "luck", pace: "luck", road: "race", byes: "race", trades: "trades", top: "home" };
   let lastSub = null;
   function route() {
@@ -824,6 +824,7 @@
       ["race", "02", "Playoff race", a ? `${pct(a.po)} playoffs · ${pct(a.div)} bye` : "Season complete", "Odds from 10,000 simulations, your what-if calls, and bye weeks."],
       ["trades", "03", "Trades", `${D.trades.filter((t) => t.mine).length} deals traced`, "Every deal scored, every traded pick traced to the player it became."],
       ["keepers", "04", "Keepers", "Who to keep in 2027", "One verdict per player, your plan for next year, and who should have been kept before."],
+      ["research", "05", "Research", "Defenses, matchups, records", "Stream defenses, check any player's schedule, and see this week's best matchups."],
     ];
     $("#homeTiles").innerHTML = tiles.map(([p, n, t, stat, d]) => `<a class="tile reveal" href="#/${p}"><span class="tile__n">${n}</span><span class="tile__t">${t}</span><span class="tile__stat">${esc(stat)}</span><span class="tile__d">${d}</span><span class="tile__go" aria-hidden="true">→</span></a>`).join("");
   })();

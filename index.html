@@ -10,10 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=16" />
-  <link rel="stylesheet" href="css/lab.css?v=16" />
-  <link rel="stylesheet" href="css/lab-tools.css?v=16" />
-  <link rel="stylesheet" href="css/redesign.css?v=16" />
+  <link rel="stylesheet" href="css/styles.css?v=17" />
+  <link rel="stylesheet" href="css/lab.css?v=17" />
+  <link rel="stylesheet" href="css/lab-tools.css?v=17" />
+  <link rel="stylesheet" href="css/redesign.css?v=17" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -27,6 +27,7 @@
         <a href="#/race" data-tab="race">Playoffs</a>
         <a href="#/trades" data-tab="trades">Trades</a>
         <a href="#/keepers" data-tab="keepers">Keepers</a>
+        <a href="#/research" data-tab="research">Research</a>
       </div>
     </div>
   </nav>
@@ -511,6 +512,52 @@
       </section>
     </div>
   </div>
+  <!-- ===== RESEARCH ===== -->
+  <div class="page" data-page="research" hidden>
+    <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 5 · Do your homework</p><h1 class="page-hero__title">Re<em>search</em></h1><p class="page-hero__sub" id="rSub">Records to chase, defenses to stream, matchups to exploit.</p></div></header>
+    <nav class="subnav" aria-label="Research sections"><a href="#/research/hub" data-sub="hub">Hub</a><a href="#/research/defense" data-sub="defense">Defense lab</a><a href="#/research/players" data-sub="players">Player matchups</a><a href="#/research/week" data-sub="week">This week</a></nav>
+
+    <div class="sub" data-sub="hub">
+      <section class="section" id="r-hub" aria-label="Research hub"><div class="hubgrid" id="hubGrid"></div></section>
+    </div>
+
+    <div class="sub" data-sub="defense" hidden>
+      <section class="section" id="r-def" aria-labelledby="dlTitle">
+        <h2 class="subhead" id="dlTitle" style="margin-top:0">Defense lab</h2>
+        <p class="howto">Each week's projection is half the defense's own average and half what its opponent's offense gives up to defenses this season. Pick a pair below, or tap up to four defenses to compare. Grey ones are owned by someone else.</p>
+        <div class="dl-controls" id="dlControls"></div>
+        <div class="two two--even" style="margin-top:16px">
+          <article class="panel"><header class="panel__head"><h3>Best two-defense pairs</h3></header><div id="dlPairs"></div></article>
+          <article class="panel"><header class="panel__head"><h3>Compare defenses</h3><p class="panel__sub">Tap to add or remove (up to 4)</p></header><div class="dchips" id="dlChips"></div></article>
+        </div>
+        <article class="panel panel--flush"><div class="table-wrap" id="dlTable"></div></article>
+      </section>
+    </div>
+
+    <div class="sub" data-sub="players" hidden>
+      <section class="section" id="r-players" aria-labelledby="pmTitle">
+        <h2 class="subhead" id="pmTitle" style="margin-top:0">Player matchups</h2>
+        <div class="pm-pick">
+          <label class="select"><span>Find any player</span><input id="pmSearch" list="pmList" placeholder="Type a name…" autocomplete="off"></label>
+          <datalist id="pmList"></datalist>
+        </div>
+        <p class="bw__k" style="margin-top:12px">Your roster</p>
+        <div class="dchips" id="pmMine"></div>
+        <article class="panel pm-card" id="pmCard" style="margin-top:16px"></article>
+        <article class="panel panel--flush"><div class="table-wrap" id="pmSched"></div></article>
+      </section>
+    </div>
+
+    <div class="sub" data-sub="week" hidden>
+      <section class="section" id="r-week" aria-labelledby="wkTitle">
+        <h2 class="subhead" id="wkTitle" style="margin-top:0">This week</h2>
+        <p class="howto">Rank = how many fantasy points that opponent gives up to the position (#1 is the most generous).</p>
+        <div class="wk-board" id="wkBoard"></div>
+        <h3 class="subhead">Your players this week</h3>
+        <article class="panel panel--flush"><div class="table-wrap" id="wkMine"></div></article>
+      </section>
+    </div>
+  </div>
   </main>
 
 
@@ -521,8 +568,9 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=16"></script>
-  <script src="js/app.js?v=16"></script>
-  <script src="js/keepers.js?v=16"></script>
+  <script src="data/site-data.js?v=17"></script>
+  <script src="js/app.js?v=17"></script>
+  <script src="js/keepers.js?v=17"></script>
+  <script src="js/research.js?v=17"></script>
 </body>
 </html>
