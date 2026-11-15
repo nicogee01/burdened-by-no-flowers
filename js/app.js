@@ -48,7 +48,7 @@
   window.addEventListener("scroll", onScroll, { passive: true });
 
   // ---------- tabs: #/page or #/page/anchor ----------
-  const PAGES = ["home", "luck", "race", "trades", "keepers", "research"];
+  const PAGES = ["home", "luck", "race", "trades", "keepers", "research", "footy"];
   const LEGACY = { case: "luck", weeks: "luck", pace: "luck", road: "race", byes: "race", trades: "trades", top: "home" };
   let lastSub = null;
   function route() {

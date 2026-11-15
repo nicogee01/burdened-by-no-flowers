@@ -13,7 +13,7 @@ def build(get_url, league, rosters, users, players, me):
     sched = get_url(f"https://api.sleeper.com/schedule/nfl/regular/{season}") or []
     if not sched:
         return None
-    done = max((g["week"] for g in sched if g.get("status") == "complete"), default=0)
+    done = max((w for w in {g["week"] for g in sched} if all(g.get("status") == "complete" for g in sched if g["week"] <= w)), default=0)  # every game final
     last_week = max(g["week"] for g in sched)
 
     def score(stats):

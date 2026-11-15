@@ -10,10 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=20" />
-  <link rel="stylesheet" href="css/lab.css?v=20" />
-  <link rel="stylesheet" href="css/lab-tools.css?v=20" />
-  <link rel="stylesheet" href="css/redesign.css?v=20" />
+  <link rel="stylesheet" href="css/styles.css?v=21" />
+  <link rel="stylesheet" href="css/lab.css?v=21" />
+  <link rel="stylesheet" href="css/lab-tools.css?v=21" />
+  <link rel="stylesheet" href="css/redesign.css?v=21" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -28,6 +28,7 @@
         <a href="#/trades" data-tab="trades">Trades</a>
         <a href="#/keepers" data-tab="keepers">Keepers</a>
         <a href="#/research" data-tab="research">Research</a>
+        <a href="#/footy" data-tab="footy">Sunday Footy</a>
       </div>
     </div>
   </nav>
@@ -572,6 +573,40 @@
       </section>
     </div>
   </div>
+  <!-- ===== SUNDAY FOOTY (second league) ===== -->
+  <div class="page" data-page="footy" hidden>
+    <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Your other league</p><h1 class="page-hero__title">Sunday <em>Footy</em></h1><p class="page-hero__sub">Official Sunday Footy League: top 5 by record make it (top 2 get byes), and the 6th seed is the highest scorer outside the top 5.</p></div></header>
+    <nav class="subnav" aria-label="Sunday Footy sections"><a href="#/footy/pickem" data-sub="pickem">Pick 'em</a><a href="#/footy/dst" data-sub="dst">D/ST matchups</a></nav>
+
+    <div class="sub" data-sub="pickem">
+      <section class="section" id="ft-pickem" aria-labelledby="ftTitle">
+        <div class="section__head section__head--row" style="margin-bottom:12px">
+          <h2 class="subhead" id="ftTitle" style="margin:0">Pick 'em</h2>
+          <div class="pk-actions"><button type="button" class="btn-ghost" id="ftMine">I win out</button><button type="button" class="btn-ghost" id="ftReset">Reset</button></div>
+        </div>
+        <p class="howto" id="ftLede" style="margin-top:0"></p>
+        <div class="ft-me" id="ftMe"></div>
+        <div class="pk-layout">
+          <div class="pk-games" id="ftGames"></div>
+          <aside class="pk-side">
+            <article class="panel pk-stand"><header class="panel__head"><h3>Projected standings</h3><p class="panel__sub">5,000 simulations with your picks and scores</p></header><div class="table-wrap" id="ftStand"></div></article>
+            <article class="panel"><header class="panel__head"><h3>If the season ended today</h3></header><div id="ftToday"></div></article>
+          </aside>
+        </div>
+      </section>
+    </div>
+
+    <div class="sub" data-sub="dst" hidden>
+      <section class="section" id="ft-dst" aria-labelledby="ftDstTitle">
+        <div class="section__head section__head--row" style="margin-bottom:12px">
+          <h2 class="subhead" id="ftDstTitle" style="margin:0">D/ST matchups</h2>
+          <div class="seg seg--sm" role="tablist" aria-label="Week" id="ftDstWeeks"></div>
+        </div>
+        <p class="howto" style="margin-top:0">In this league's scoring. "Defenses vs. that offense" is what defenses have averaged against this week's opponent this season, ranked 1 (most generous) to 32. Projection = half the D/ST's own average, half that number. Free agents are highlighted.</p>
+        <article class="panel panel--flush"><div class="table-wrap" id="ftDst"></div></article>
+      </section>
+    </div>
+  </div>
   </main>
 
 
@@ -582,10 +617,11 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=20"></script>
-  <script src="js/app.js?v=20"></script>
-  <script src="js/keepers.js?v=20"></script>
-  <script src="js/research.js?v=20"></script>
-  <script src="js/compare.js?v=20"></script>
+  <script src="data/site-data.js?v=21"></script>
+  <script src="js/app.js?v=21"></script>
+  <script src="js/keepers.js?v=21"></script>
+  <script src="js/research.js?v=21"></script>
+  <script src="js/compare.js?v=21"></script>
+  <script src="js/footy.js?v=21"></script>
 </body>
 </html>

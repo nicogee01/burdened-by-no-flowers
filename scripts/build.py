@@ -9,8 +9,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import keepers  # noqa: E402
 import research  # noqa: E402
 import compare  # noqa: E402
+import otherleague  # noqa: E402
 
 LEAGUE_ID = "1367213857868627968"
+OTHER_LEAGUE_ID = "1387553090483273728"  # Official Sunday Footy League
 ME = "1169397187500027904"  # nicog01
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -306,6 +308,11 @@ def main():
                        "teamBye": bye_of, "rosters": rosters}
 
     out["keepers"] = keepers.build(seasons, players, ME, pinfo)
+    try:
+        out["footy"] = otherleague.build(get, get_url, OTHER_LEAGUE_ID, ME)
+    except Exception as e:
+        print("second league skipped:", e)
+        out["footy"] = None
     try:
         out["compare"] = compare.build(seasons, players, ME)
     except Exception as e:
