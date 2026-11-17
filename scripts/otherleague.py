@@ -8,6 +8,15 @@ import statistics
 
 def build(get, get_url, league_id, me):
     L = get(f"league/{league_id}")
+    lagging = False
+    if L.get("status") == "in_season":
+        sch = get_url(f"https://api.sleeper.com/schedule/nfl/regular/{L['season']}") or []
+        final = max((w for w in {g["week"] for g in sch} if all(g.get("status") == "complete" for g in sch if g["week"] <= w)), default=0)
+        reg_end_ = L["settings"].get("playoff_week_start", 15) - 1
+        if final > (L["settings"].get("last_scored_leg") or 0):
+            lagging = True  # Sleeper hasn't processed the week yet: rebuild records from the scores
+            L["settings"]["last_scored_leg"] = min(final, reg_end_)
+            L["settings"]["leg"] = min(final, reg_end_) + 1
     st = L["settings"]
     season = L["season"]
     reg_end = st.get("playoff_week_start", 15) - 1
@@ -39,6 +48,26 @@ def build(get, get_url, league_id, me):
                 live[str(m["roster_id"])] = round(m.get("points") or 0, 2)
         if w >= current:
             schedule.append({"week": w, "pairs": [p for p in pairs.values() if len(p) == 2]})
+    if lagging:
+        for t in teams:
+            t["w"] = t["l"] = t["t"] = 0
+            t["pf"] = round(sum(t["scores"]), 2)
+        for w in range(1, scored + 1):
+            pairs = {}
+            for m in get(f"league/{league_id}/matchups/{w}") or []:
+                if m.get("matchup_id"):
+                    pairs.setdefault(m["matchup_id"], []).append(m)
+            for v in pairs.values():
+                if len(v) != 2:
+                    continue
+                a_, b_ = v
+                pa, pb = a_.get("points") or 0, b_.get("points") or 0
+                ta, tb = by_rid.get(a_["roster_id"]), by_rid.get(b_["roster_id"])
+                if not ta or not tb:
+                    continue
+                if pa > pb: ta["w"] += 1; tb["l"] += 1
+                elif pb > pa: tb["w"] += 1; ta["l"] += 1
+                else: ta["t"] += 1; tb["t"] += 1
     for t in teams:
         t["avg"] = round(statistics.mean(t["scores"]), 2) if t["scores"] else 0
 

@@ -39,10 +39,26 @@ def load_players():
     return get("players/nfl")
 
 
+def nfl_weeks_final(season):
+    """Last NFL week in which every game is final (don't wait for Sleeper to process the week)."""
+    try:
+        sched = get_url(f"https://api.sleeper.com/schedule/nfl/regular/{season}") or []
+    except Exception:
+        return 0
+    weeks = {g["week"] for g in sched}
+    return max((w for w in weeks if all(g.get("status") == "complete" for g in sched if g["week"] <= w)), default=0)
+
+
 def fetch_seasons():
     seasons, lid = [], LEAGUE_ID
     while lid and lid != "0":
         L = get(f"league/{lid}")
+        if L.get("status") == "in_season":
+            # Sleeper can take a day to "score" a week after Monday night; count it once every game is final
+            final = nfl_weeks_final(L["season"])
+            reg_end_ = L["settings"].get("playoff_week_start", 15) - 1
+            if final > (L["settings"].get("last_scored_leg") or 0):
+                L["settings"]["last_scored_leg"] = min(final, reg_end_)
         s = {
             "league": L,
             "users": get(f"league/{lid}/users"),
