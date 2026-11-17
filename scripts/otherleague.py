@@ -32,7 +32,7 @@ def build(get, get_url, league_id, me):
             "name": ((u.get("metadata") or {}).get("team_name") or u.get("display_name") or f"Team {r['roster_id']}").strip(),
             "avatar": (u.get("metadata") or {}).get("avatar") or (f"https://sleepercdn.com/avatars/{u['avatar']}" if u.get("avatar") else None),
             "w": s.get("wins", 0), "l": s.get("losses", 0), "t": s.get("ties", 0),
-            "pf": round(s.get("fpts", 0) + s.get("fpts_decimal", 0) / 100, 2), "scores": [],
+            "pf": round(s.get("fpts", 0) + s.get("fpts_decimal", 0) / 100, 2), "scores": [], "pa": 0.0, "results": [],
         })
     by_rid = {t["rid"]: t for t in teams}
     schedule, live = [], {}
@@ -48,6 +48,22 @@ def build(get, get_url, league_id, me):
                 live[str(m["roster_id"])] = round(m.get("points") or 0, 2)
         if w >= current:
             schedule.append({"week": w, "pairs": [p for p in pairs.values() if len(p) == 2]})
+    # points against and week-by-week results
+    for w in range(1, scored + 1):
+        pairs = {}
+        for m in get(f"league/{league_id}/matchups/{w}") or []:
+            if m.get("matchup_id"):
+                pairs.setdefault(m["matchup_id"], []).append(m)
+        for v in pairs.values():
+            if len(v) != 2:
+                continue
+            for x, y in ((v[0], v[1]), (v[1], v[0])):
+                t = by_rid.get(x["roster_id"])
+                if not t:
+                    continue
+                px, py = x.get("points") or 0, y.get("points") or 0
+                t["pa"] = round(t["pa"] + py, 2)
+                t["results"].append("W" if px > py else "L" if py > px else "T")
     if lagging:
         for t in teams:
             t["w"] = t["l"] = t["t"] = 0

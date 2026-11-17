@@ -10,10 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=21" />
-  <link rel="stylesheet" href="css/lab.css?v=21" />
-  <link rel="stylesheet" href="css/lab-tools.css?v=21" />
-  <link rel="stylesheet" href="css/redesign.css?v=21" />
+  <link rel="stylesheet" href="css/styles.css?v=22" />
+  <link rel="stylesheet" href="css/lab.css?v=22" />
+  <link rel="stylesheet" href="css/lab-tools.css?v=22" />
+  <link rel="stylesheet" href="css/redesign.css?v=22" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -194,8 +194,16 @@
 
   <div class="page" data-page="race" hidden>
     <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Tab 2 · The only way out</p><h1 class="page-hero__title">Playoff <em>race</em></h1><p class="page-hero__sub">Simulated odds, the division path to a bye, and every bye week left on the schedule.</p></div></header>
-    <nav class="subnav" aria-label="Sections"><a href="#/race/odds" data-sub="odds">Playoff odds</a><a href="#/race/line" data-sub="line">The playoff line</a><a href="#/race/pickem" data-sub="pickem">Pick 'em</a><a href="#/race/byes" data-sub="byes">Bye weeks</a></nav>
-    <div class="sub" data-sub="odds">
+    <nav class="subnav" aria-label="Sections"><a href="#/race/standings" data-sub="standings">Standings</a><a href="#/race/odds" data-sub="odds">Playoff odds</a><a href="#/race/line" data-sub="line">The playoff line</a><a href="#/race/pickem" data-sub="pickem">Pick 'em</a><a href="#/race/byes" data-sub="byes">Bye weeks</a></nav>
+    <div class="sub" data-sub="standings">
+      <section class="section" id="standings" aria-labelledby="stTitle">
+        <h2 class="subhead" id="stTitle" style="margin-top:0">Current standings</h2>
+        <p class="howto" id="stLede" style="margin-top:0"></p>
+        <article class="panel panel--flush"><div class="table-wrap" id="stTable"></div></article>
+        <div class="two two--even" id="stDivs" style="margin-top:16px"></div>
+      </section>
+    </div>
+    <div class="sub" data-sub="odds" hidden>
     <!-- ===== ROAD TO THE BYE ===== -->
     <section class="section" id="road" aria-labelledby="roadTitle">
       <div class="section__head">
@@ -576,9 +584,16 @@
   <!-- ===== SUNDAY FOOTY (second league) ===== -->
   <div class="page" data-page="footy" hidden>
     <header class="page-hero"><div class="page-hero__in"><p class="eyebrow">Your other league</p><h1 class="page-hero__title">Sunday <em>Footy</em></h1><p class="page-hero__sub">Official Sunday Footy League: top 5 by record make it (top 2 get byes), and the 6th seed is the highest scorer outside the top 5.</p></div></header>
-    <nav class="subnav" aria-label="Sunday Footy sections"><a href="#/footy/pickem" data-sub="pickem">Pick 'em</a><a href="#/footy/dst" data-sub="dst">D/ST matchups</a></nav>
+    <nav class="subnav" aria-label="Sunday Footy sections"><a href="#/footy/standings" data-sub="standings">Standings</a><a href="#/footy/pickem" data-sub="pickem">Pick 'em</a><a href="#/footy/dst" data-sub="dst">D/ST matchups</a></nav>
 
-    <div class="sub" data-sub="pickem">
+    <div class="sub" data-sub="standings">
+      <section class="section" id="ft-standings" aria-labelledby="ftStTitle">
+        <h2 class="subhead" id="ftStTitle" style="margin-top:0">Current standings</h2>
+        <p class="howto" id="ftStLede" style="margin-top:0"></p>
+        <article class="panel panel--flush"><div class="table-wrap" id="ftStTable"></div></article>
+      </section>
+    </div>
+    <div class="sub" data-sub="pickem" hidden>
       <section class="section" id="ft-pickem" aria-labelledby="ftTitle">
         <div class="section__head section__head--row" style="margin-bottom:12px">
           <h2 class="subhead" id="ftTitle" style="margin:0">Pick 'em</h2>
@@ -617,11 +632,11 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=21"></script>
-  <script src="js/app.js?v=21"></script>
-  <script src="js/keepers.js?v=21"></script>
-  <script src="js/research.js?v=21"></script>
-  <script src="js/compare.js?v=21"></script>
-  <script src="js/footy.js?v=21"></script>
+  <script src="data/site-data.js?v=22"></script>
+  <script src="js/app.js?v=22"></script>
+  <script src="js/keepers.js?v=22"></script>
+  <script src="js/research.js?v=22"></script>
+  <script src="js/compare.js?v=22"></script>
+  <script src="js/footy.js?v=22"></script>
 </body>
 </html>

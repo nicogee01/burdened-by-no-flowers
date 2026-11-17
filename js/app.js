@@ -451,6 +451,29 @@
 
   const base = simulate(10000, {});
 
+  // ---------- current standings ----------
+  (function standings() {
+    if (!document.getElementById("stTable")) return;
+    const ts = cur.teams;
+    const res = Object.fromEntries(ts.map((t) => [t.rid, []]));
+    cur.weeks.forEach((wk) => Object.entries(wk).forEach(([rid, v]) => { const o = wk[v.opp]; res[rid] && res[rid].push(v.pts > o.pts ? "W" : v.pts < o.pts ? "L" : "T"); }));
+    const cmp = (x, y) => y.w - x.w || y.pf - x.pf;
+    const divW = [1, 2].map((d) => ts.filter((t) => t.div === d).sort(cmp)[0]).sort(cmp);
+    const rest = ts.filter((t) => !divW.includes(t)).sort(cmp);
+    const seeded = [...divW, ...rest];
+    const slots = cur.playoffTeams, line = seeded[slots - 1];
+    const streak = (r) => { if (!r.length) return "–"; const last = r[r.length - 1]; let n = 0; for (let i = r.length - 1; i >= 0 && r[i] === last; i--) n++; return last + n; };
+    const chips = (r) => r.slice(-5).map((x) => `<i class="rc rc--${x}">${x}</i>`).join("");
+    const gb = (t) => { const d = line.w - t.w; return d <= 0 ? "–" : String(d); };
+    const status = (i) => (i < 2 ? `<span class="pt-tag pt-keeper">Bye</span>` : i < slots ? `<span class="pt-tag pt-used">In</span>` : `<span class="pt-tag pt-pending">Out</span>`);
+    $("#stLede").innerHTML = `Through week ${cur.weeksDone}. Seeds as if the season ended today: the two division winners get the byes (seeds 1–2), then the next ${slots - 2} teams by record, with points for as the tiebreaker. "GB" is games behind the ${ord(slots)} seed.`;
+    $("#stTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th>Div</th><th class="n">W–L</th><th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""} ${i === slots - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${tname(t)}</td><td>${esc((cur.divisions[t.div] || "").replace(" NY", ""))}</td><td class="n"><b>${t.w}–${t.l}</b></td><td class="n">${f1(t.pf)}</td><td class="n">${f1(t.pa)}</td><td class="n">${gb(t)}</td><td><span class="rcs">${chips(res[t.rid])}</span></td><td class="n">${streak(res[t.rid])}</td><td>${status(i)}</td></tr>`).join("")}</tbody></table>`;
+    $("#stDivs").innerHTML = [1, 2].map((d) => {
+      const rows = ts.filter((t) => t.div === d).sort(cmp), lead = rows[0];
+      return `<article class="panel"><header class="panel__head"><h3>${esc(cur.divisions[d])}</h3><p class="panel__sub">Winner gets a first-round bye</p></header><table><thead><tr><th>Team</th><th class="n">W–L</th><th class="n">PF</th><th class="n">GB</th></tr></thead><tbody>${rows.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""}"><td>${tname(t)}</td><td class="n">${t.w}–${t.l}</td><td class="n">${f1(t.pf)}</td><td class="n">${i === 0 ? "–" : lead.w - t.w || "0 (PF)"}</td></tr>`).join("")}</tbody></table></article>`;
+    }).join("");
+  })();
+
   // ---------- pick 'em: choose any remaining game, watch the standings move ----------
   (function pickem() {
     if (!remaining.length || !document.getElementById("pickem")) return;
