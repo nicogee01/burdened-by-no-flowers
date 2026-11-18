@@ -21,7 +21,7 @@ def build(get, get_url, league_id, me):
     season = L["season"]
     reg_end = st.get("playoff_week_start", 15) - 1
     scored = min(st.get("last_scored_leg", 0) or 0, reg_end)
-    current = st.get("leg") or scored + 1
+    current = max(st.get("leg") or 0, scored + 1)  # Sleeper keeps "leg" on a finished week until it rolls over
     users = {u["user_id"]: u for u in get(f"league/{league_id}/users")}
     teams = []
     for r in get(f"league/{league_id}/rosters"):
