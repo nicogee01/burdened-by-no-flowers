@@ -315,3 +315,45 @@ tr.is-fa td { background: rgba(230, 196, 122, 0.18); }
 .sttable th[aria-sort="descending"]::after { content: " ▼"; color: var(--accent); }
 .sttable th[aria-sort="ascending"]::after { content: " ▲"; color: var(--accent); }
 .sttable.is-sorted tr.cut td { border-bottom: 1px solid var(--line); }
+
+/* ---------- Scenarios ---------- */
+.scn-pickteam { margin: 4px 0 18px; }
+.scn-pickteam select { min-width: min(100%, 320px); }
+.scn-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.scn-kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.scn-kpi > span { font-family: var(--f-label); font-weight: 700; font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+.scn-kpi > b { font-family: var(--f-display); font-size: 40px; line-height: 1; color: var(--text); font-weight: 400; }
+.scn-kpi > small { color: var(--muted); font-size: 13px; line-height: 1.4; }
+.scn-table td, .scn-table th { white-space: nowrap; }
+.scn-row { cursor: pointer; }
+.scn-row:hover td { background: rgba(200, 16, 46, 0.05); }
+.scn-go { font-family: var(--f-label); font-weight: 700; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-left: 8px; }
+.scn-odds { font-weight: 700; }
+.scn-explorer { margin-top: 18px; scroll-margin-top: 90px; }
+.scn-hint { border: 1px dashed var(--line-2); border-radius: 12px; padding: 12px 14px; }
+.scn-path__head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
+.scn-goal { display: inline-flex; border: 1px solid var(--line-2); border-radius: 999px; overflow: hidden; }
+.scn-goal button { font: 700 13px var(--f-label); letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 14px; min-height: 36px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.scn-goal button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.scn-locks { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 12px; }
+.scn-lock { font: 600 13px var(--f-body); border: 1px solid var(--ink); background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.scn-must { background: rgba(212, 160, 23, 0.12); border-left: 4px solid var(--gold); border-radius: 8px; padding: 12px 16px; margin: 6px 0; }
+.scn-must ol { margin: 8px 0 0; padding-left: 20px; }
+.scn-verdict { border-radius: 8px; padding: 12px 16px; margin: 6px 0; }
+.scn-verdict.is-good { background: rgba(26, 127, 75, 0.12); border-left: 4px solid #1a7f4b; }
+.scn-verdict.is-bad { background: rgba(200, 16, 46, 0.08); border-left: 4px solid var(--accent); }
+.scn-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.scn-game { border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
+.scn-game.is-own { border-color: var(--accent); }
+.scn-game__h { font-family: var(--f-label); font-weight: 700; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+.scn-pick { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; text-align: left; width: 100%; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--text); padding: 8px 10px; cursor: pointer; font: 14px var(--f-body); }
+.scn-pick:hover { border-color: var(--ink); }
+.scn-pick__who { font-weight: 600; }
+.scn-pick__p { font-weight: 700; text-align: right; }
+.scn-pick__p small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.scn-bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.scn-bar i { display: block; height: 100%; background: var(--ink); }
+.scn-pick.is-good .scn-bar i { background: #1a7f4b; }
+.scn-pick .tag { grid-column: 1 / -1; justify-self: start; }
+.scn-pick.is-bad { opacity: 0.85; }
+@media (max-width: 560px) { .scn-games { grid-template-columns: 1fr; } .scn-kpi > b { font-size: 32px; } }

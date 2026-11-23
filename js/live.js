@@ -6,7 +6,7 @@
   const D = window.SITE_DATA;
   const me = document.currentScript;
   const v = me ? me.dataset.v : "";
-  const scripts = ["js/app.js", "js/keepers.js", "js/research.js", "js/compare.js", "js/footy.js"];
+  const scripts = ["js/app.js", "js/keepers.js", "js/research.js", "js/compare.js", "js/footy.js", "js/scenarios.js"];
   const get = (u) => fetch(u, { cache: "no-store" }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))));
   const phi = (z) => { const s = Math.sign(z); const x = Math.abs(z) / Math.SQRT2; const t = 1 / (1 + 0.3275911 * x); const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return 0.5 * (1 + s * y); };
   const scoreStats = (stats, sc) => { let p = 0; for (const k in stats) if (typeof stats[k] === "number" && sc[k]) p += stats[k] * sc[k]; return p; };
