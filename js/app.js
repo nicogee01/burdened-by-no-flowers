@@ -354,6 +354,32 @@
     }).join("")}</div>`;
   }
 
+  function makeSortable(table) {
+    if (!table) return;
+    const ths = [...table.tHead.rows[0].cells];
+    ths.forEach((th, i) => {
+      if (!th.textContent.trim()) return;
+      th.tabIndex = 0; th.classList.add("sortable__th"); th.setAttribute("role", "columnheader");
+      const go = () => {
+        const dir = th.getAttribute("aria-sort") === "descending" ? "ascending" : "descending";
+        ths.forEach((x) => x.removeAttribute("aria-sort"));
+        th.setAttribute("aria-sort", dir);
+        const body = table.tBodies[0], rows = [...body.rows];
+        const val = (r) => {
+          const c = r.cells[i]; if (!c) return "";
+          const t = c.textContent.trim().replace("−", "-");
+          const m = t.match(/^(-?\d+(?:\.\d+)?)(?:–(\d+))?/); // "6–5" sorts by wins, then fewer losses
+          return m ? (+m[1]) - (m[2] ? +m[2] / 1000 : 0) : t === "–" ? -Infinity : t;
+        };
+        rows.sort((a, b) => { const x = val(a), y = val(b); const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y)); return dir === "ascending" ? c : -c; });
+        rows.forEach((r) => body.appendChild(r));
+        table.classList.toggle("is-sorted", true);
+      };
+      th.addEventListener("click", go);
+      th.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    });
+  }
+
   function tabs(el, values, curVal, onPick) {
     el.innerHTML = values.map((v) => `<button role="tab" aria-selected="${v === curVal}" data-v="${v}">${v}</button>`).join("");
     el.addEventListener("click", (e) => {
@@ -484,9 +510,10 @@
     const chips = (r) => r.slice(-5).map((x) => `<i class="rc rc--${x}">${x}</i>`).join("");
     const gb = (t) => { const d = line.w - t.w; return d <= 0 ? "–" : String(d); };
     const status = (i) => (i < 2 ? `<span class="pt-tag pt-keeper">Bye</span>` : i < slots ? `<span class="pt-tag pt-used">In</span>` : `<span class="pt-tag pt-pending">Out</span>`);
-    $("#stLede").innerHTML = `${LIVE ? `<b>* Records, points and seeds include week ${liveWeek}, projected live</b> (each game goes to its current favourite). ` : ""}Through week ${cur.weeksDone}${LIVE ? ` plus week ${liveWeek} in progress` : ""}. Seeds as if the season ended today: the two division winners get the byes (seeds 1–2), then the next ${slots - 2} teams by record, with points for as the tiebreaker. "GB" is games behind the ${ord(slots)} seed.`;
+    $("#stLede").innerHTML = `${LIVE ? `<b>* Records, points and seeds include week ${liveWeek}, projected live</b> (each game goes to its current favourite, and points for/against add each team's projected final). ` : ""}Through week ${cur.weeksDone}${LIVE ? ` plus week ${liveWeek} in progress` : ""}. Seeds as if the season ended today: the two division winners get the byes (seeds 1–2), then the next ${slots - 2} teams by record, with points for as the tiebreaker. "GB" is games behind the ${ord(slots)} seed.`;
     const hold = (t) => (t.nowW == null ? null : [t.nowW, t.nowL, t.liveP]);
-    $("#stTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th>Div</th><th class="n">W–L</th>${LIVE ? `<th class="n">Before wk ${liveWeek}</th>` : ""}<th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""} ${i === slots - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${tname(t)}</td><td>${esc((cur.divisions[t.div] || "").replace(" NY", ""))}</td><td class="n"><b>${t.w}–${t.l}</b>${t.nowW != null ? `<sup class="proj-mark">*</sup><br><small class="muted">${pct(t.liveP)} to win wk ${liveWeek}</small>` : ""}</td>${LIVE ? (() => { const x = hold(t); return `<td class="n">${x ? `${x[0]}–${x[1]}` : "–"}</td>`; })() : ""}<td class="n">${f1(t.pf)}</td><td class="n">${f1(t.pa)}</td><td class="n">${gb(t)}</td><td><span class="rcs">${chips(res[t.rid])}</span></td><td class="n">${streak(res[t.rid])}</td><td>${status(i)}</td></tr>`).join("")}</tbody></table>`;
+    $("#stTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th>Div</th><th class="n">W–L</th>${LIVE ? `<th class="n">Before wk ${liveWeek}</th>` : ""}<th class="n">${LIVE ? "PF (proj.)" : "PF"}</th><th class="n">${LIVE ? "PA (proj.)" : "PA"}</th><th class="n">GB</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""} ${i === slots - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${tname(t)}</td><td>${esc((cur.divisions[t.div] || "").replace(" NY", ""))}</td><td class="n"><b>${t.w}–${t.l}</b>${t.nowW != null ? `<sup class="proj-mark">*</sup><br><small class="muted">${pct(t.liveP)} to win wk ${liveWeek}</small>` : ""}</td>${LIVE ? (() => { const x = hold(t); return `<td class="n">${x ? `${x[0]}–${x[1]}` : "–"}</td>`; })() : ""}<td class="n">${f1(t.pf)}</td><td class="n">${f1(t.pa)}</td><td class="n">${gb(t)}</td><td><span class="rcs">${chips(res[t.rid])}</span></td><td class="n">${streak(res[t.rid])}</td><td>${status(i)}</td></tr>`).join("")}</tbody></table>`;
+    makeSortable(document.querySelector("#stTable table"));
     $("#stLive").innerHTML = LIVE ? liveBoard(LIVE.fugazi, (rid) => tm(cur, rid), cur.myRid, liveWeek) : "";
     $("#stDivs").innerHTML = [1, 2].map((d) => {
       const rows = ts.filter((t) => t.div === d).sort(cmp), lead = rows[0];
@@ -872,7 +899,7 @@
     $("#homeTiles").innerHTML = tiles.map(([p, n, t, stat, d]) => `<a class="tile reveal" href="#/${p}"><span class="tile__n">${n}</span><span class="tile__t">${t}</span><span class="tile__stat">${esc(stat)}</span><span class="tile__d">${d}</span><span class="tile__go" aria-hidden="true">→</span></a>`).join("");
   })();
 
-  window.BBNF = { D, $, esc, f1, f0, sgn, pct, ord, tm, tname, avatar, tabs, observe, cur, liveBoard, odds: typeof base !== "undefined" ? base.acc : null };
+  window.BBNF = { D, $, esc, f1, f0, sgn, pct, ord, tm, tname, avatar, tabs, observe, cur, liveBoard, makeSortable, odds: typeof base !== "undefined" ? base.acc : null };
   route();
   observe();
 })();

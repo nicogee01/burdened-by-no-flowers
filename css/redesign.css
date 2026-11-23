@@ -309,3 +309,9 @@ tr.is-fa td { background: rgba(230, 196, 122, 0.18); }
 .lv-bar i { display: block; height: 100%; background: var(--ink); }
 @media (max-width: 520px) { .lv-game { grid-template-columns: 1fr; } .lv-game > .lv-side:last-child { text-align: left; justify-items: start; } }
 .proj-mark { color: var(--accent); font-weight: 700; margin-left: 1px; }
+
+.sttable th.sortable__th { cursor: pointer; user-select: none; white-space: nowrap; }
+.sttable th.sortable__th::after { content: " ↕"; color: var(--faint); font-size: 11px; }
+.sttable th[aria-sort="descending"]::after { content: " ▼"; color: var(--accent); }
+.sttable th[aria-sort="ascending"]::after { content: " ▲"; color: var(--accent); }
+.sttable.is-sorted tr.cut td { border-bottom: 1px solid var(--line); }
