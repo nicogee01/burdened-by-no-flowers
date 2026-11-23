@@ -126,4 +126,4 @@ def build(get, get_url, league_id, me):
     return {"leagueId": league_id, "name": L["name"], "season": season, "regEnd": reg_end, "scored": scored,
             "current": current, "playoffTeams": st.get("playoff_teams", 6), "teams": teams,
             "schedule": schedule, "live": live, "nflDone": nfl_done,
-            "dst": {"vs": vs, "rank": rank, "defs": defs, "playoffStart": reg_end + 1}}
+            "dst": {"vs": vs, "rank": rank, "defs": defs, "playoffStart": reg_end + 1}, "scoring": sc}

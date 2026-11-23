@@ -10,10 +10,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=22" />
-  <link rel="stylesheet" href="css/lab.css?v=22" />
-  <link rel="stylesheet" href="css/lab-tools.css?v=22" />
-  <link rel="stylesheet" href="css/redesign.css?v=22" />
+  <link rel="stylesheet" href="css/styles.css?v=23" />
+  <link rel="stylesheet" href="css/lab.css?v=23" />
+  <link rel="stylesheet" href="css/lab-tools.css?v=23" />
+  <link rel="stylesheet" href="css/redesign.css?v=23" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -199,6 +199,7 @@
       <section class="section" id="standings" aria-labelledby="stTitle">
         <h2 class="subhead" id="stTitle" style="margin-top:0">Current standings</h2>
         <p class="howto" id="stLede" style="margin-top:0"></p>
+        <div id="stLive"></div>
         <article class="panel panel--flush"><div class="table-wrap" id="stTable"></div></article>
         <div class="two two--even" id="stDivs" style="margin-top:16px"></div>
       </section>
@@ -590,6 +591,7 @@
       <section class="section" id="ft-standings" aria-labelledby="ftStTitle">
         <h2 class="subhead" id="ftStTitle" style="margin-top:0">Current standings</h2>
         <p class="howto" id="ftStLede" style="margin-top:0"></p>
+        <div id="ftStLive"></div>
         <article class="panel panel--flush"><div class="table-wrap" id="ftStTable"></div></article>
       </section>
     </div>
@@ -632,11 +634,7 @@
 
   <div class="tooltip" id="tip" role="status" hidden></div>
 
-  <script src="data/site-data.js?v=22"></script>
-  <script src="js/app.js?v=22"></script>
-  <script src="js/keepers.js?v=22"></script>
-  <script src="js/research.js?v=22"></script>
-  <script src="js/compare.js?v=22"></script>
-  <script src="js/footy.js?v=22"></script>
+  <script src="data/site-data.js?v=23"></script>
+  <script src="js/live.js?v=23" data-v="23"></script>
 </body>
 </html>

@@ -291,3 +291,20 @@ tr.is-fa td { background: rgba(230, 196, 122, 0.18); }
 .rc--W { background: #1f7a4d; }
 .rc--L { background: var(--accent); }
 .rc--T { background: var(--faint); }
+
+/* live week */
+.lv { margin-bottom: 16px; border-top: 5px solid #c8102e; }
+.lv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 10px; }
+.lv-game { display: grid; grid-template-columns: minmax(0, 1fr) 110px minmax(0, 1fr); gap: 8px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.lv-game.is-mine { border-color: var(--ink); box-shadow: inset 4px 0 0 #c8102e; }
+.lv-side { display: grid; gap: 2px; min-width: 0; }
+.lv-side .tname { font-weight: 600; font-size: 14px; }
+.lv-side small { color: var(--faint); font-size: 12px; }
+.lv-now { font-family: var(--f-display); font-size: 26px; line-height: 1; }
+.lv-side.fav .lv-now { color: var(--ink); }
+.lv-side:not(.fav) .lv-now { color: var(--faint); }
+.lv-game > .lv-side:last-child { text-align: right; justify-items: end; }
+.lv-mid { display: grid; grid-template-columns: auto 1fr auto; gap: 4px; align-items: center; font-family: var(--f-label); font-size: 13px; }
+.lv-bar { height: 8px; background: rgba(200, 16, 46, 0.25); border-radius: 4px; overflow: hidden; }
+.lv-bar i { display: block; height: 100%; background: var(--ink); }
+@media (max-width: 520px) { .lv-game { grid-template-columns: 1fr; } .lv-game > .lv-side:last-child { text-align: left; justify-items: start; } }

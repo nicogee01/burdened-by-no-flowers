@@ -402,6 +402,13 @@
   };
   const HIT = Object.fromEntries(cur.teams.map((t) => [t.rid, Object.fromEntries(remaining.map((w) => [w.week, byeHit(t.rid, w.week)]))]));
   const proj = (rid, wk) => model[rid] - (HIT[rid][wk] || 0);
+  // live week: projected final score and uncertainty from Sleeper's live scores + projections (js/live.js)
+  const LIVE = window.LIVE && window.LIVE.fugazi ? window.LIVE : null;
+  const liveWeek = LIVE ? LIVE.week : null;
+  const liveT = LIVE ? LIVE.fugazi.teams : {};
+  const isLive = (rid, wk) => wk === liveWeek && liveT[rid] != null;
+  const draw = (rid, wk) => (isLive(rid, wk) ? liveT[rid].proj + randn() * liveT[rid].sd : proj(rid, wk) + randn() * sd);
+  const liveWin = (a, b) => { const g = LIVE && LIVE.fugazi.games.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a)); return g ? (g.a === a ? g.pA : 1 - g.pA) : null; };
 
   function randn() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
 
@@ -417,7 +424,7 @@
       const myRes = {};
       for (const wk of remaining) {
         for (const [a, b] of wk.pairs) {
-          let pa = proj(a, wk.week) + randn() * sd, pb = proj(b, wk.week) + randn() * sd;
+          let pa = draw(a, wk.week), pb = draw(b, wk.week);
           if (a === myRid || b === myRid) {
             const c = forced[wk.week];
             const mineA = a === myRid;
@@ -451,6 +458,13 @@
 
   const base = simulate(10000, {});
 
+  // ---------- live matchup board (shared with the second league) ----------
+  function liveBoard(L, teamOf, myRid, week) {
+    const games = [...L.games].sort((x, y) => ((y.a === myRid || y.b === myRid) - (x.a === myRid || x.b === myRid)));
+    const side = (rid, p) => { const t = teamOf(rid), x = L.teams[rid]; return `<div class="lv-side ${p >= 0.5 ? "fav" : ""}">${tname(t)}<span class="lv-now">${f1(x.now)}</span><small>proj ${f1(x.proj)} · ${x.left ? `${x.left} left` : "done"}</small></div>`; };
+    return `<article class="panel lv"><header class="panel__head"><h3>Live: week ${week}</h3><p class="panel__sub">Score now, projected final (live points + Sleeper projections for players yet to play), and win chance. Updated when you open the page.</p></header><div class="lv-grid">${games.map((g) => `<div class="lv-game ${g.a === myRid || g.b === myRid ? "is-mine" : ""}">${side(g.a, g.pA)}<div class="lv-mid"><b>${pct(g.pA)}</b><span class="lv-bar"><i style="width:${g.pA * 100}%"></i></span><b>${pct(1 - g.pA)}</b></div>${side(g.b, 1 - g.pA)}</div>`).join("")}</div></article>`;
+  }
+
   // ---------- current standings ----------
   (function standings() {
     if (!document.getElementById("stTable")) return;
@@ -467,7 +481,9 @@
     const gb = (t) => { const d = line.w - t.w; return d <= 0 ? "–" : String(d); };
     const status = (i) => (i < 2 ? `<span class="pt-tag pt-keeper">Bye</span>` : i < slots ? `<span class="pt-tag pt-used">In</span>` : `<span class="pt-tag pt-pending">Out</span>`);
     $("#stLede").innerHTML = `Through week ${cur.weeksDone}. Seeds as if the season ended today: the two division winners get the byes (seeds 1–2), then the next ${slots - 2} teams by record, with points for as the tiebreaker. "GB" is games behind the ${ord(slots)} seed.`;
-    $("#stTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th>Div</th><th class="n">W–L</th><th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""} ${i === slots - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${tname(t)}</td><td>${esc((cur.divisions[t.div] || "").replace(" NY", ""))}</td><td class="n"><b>${t.w}–${t.l}</b></td><td class="n">${f1(t.pf)}</td><td class="n">${f1(t.pa)}</td><td class="n">${gb(t)}</td><td><span class="rcs">${chips(res[t.rid])}</span></td><td class="n">${streak(res[t.rid])}</td><td>${status(i)}</td></tr>`).join("")}</tbody></table>`;
+    const hold = (t) => { if (!LIVE) return null; const g = LIVE.fugazi.games.find((x) => x.a === t.rid || x.b === t.rid); if (!g) return null; const p = g.a === t.rid ? g.pA : 1 - g.pA; return p >= 0.5 ? [t.w + 1, t.l, p] : [t.w, t.l + 1, p]; };
+    $("#stTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th>Div</th><th class="n">W–L</th>${LIVE ? `<th class="n">If wk ${liveWeek} holds</th>` : ""}<th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""} ${i === slots - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${tname(t)}</td><td>${esc((cur.divisions[t.div] || "").replace(" NY", ""))}</td><td class="n"><b>${t.w}–${t.l}</b></td>${LIVE ? (() => { const x = hold(t); return `<td class="n">${x ? `${x[0]}–${x[1]} <small class="muted">${pct(x[2])}</small>` : "–"}</td>`; })() : ""}<td class="n">${f1(t.pf)}</td><td class="n">${f1(t.pa)}</td><td class="n">${gb(t)}</td><td><span class="rcs">${chips(res[t.rid])}</span></td><td class="n">${streak(res[t.rid])}</td><td>${status(i)}</td></tr>`).join("")}</tbody></table>`;
+    $("#stLive").innerHTML = LIVE ? liveBoard(LIVE.fugazi, (rid) => tm(cur, rid), cur.myRid, liveWeek) : "";
     $("#stDivs").innerHTML = [1, 2].map((d) => {
       const rows = ts.filter((t) => t.div === d).sort(cmp), lead = rows[0];
       return `<article class="panel"><header class="panel__head"><h3>${esc(cur.divisions[d])}</h3><p class="panel__sub">Winner gets a first-round bye</p></header><table><thead><tr><th>Team</th><th class="n">W–L</th><th class="n">PF</th><th class="n">GB</th></tr></thead><tbody>${rows.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""}"><td>${tname(t)}</td><td class="n">${t.w}–${t.l}</td><td class="n">${f1(t.pf)}</td><td class="n">${i === 0 ? "–" : lead.w - t.w || "0 (PF)"}</td></tr>`).join("")}</tbody></table></article>`;
@@ -482,7 +498,7 @@
     let picks = {};
     try { picks = JSON.parse(localStorage.getItem("bbnf:pickem") || "{}"); } catch { picks = {}; }
     const save = () => { try { localStorage.setItem("bbnf:pickem", JSON.stringify(picks)); } catch { /* private mode */ } };
-    const winP = (a, b, w) => { const z = (proj(a, w) - proj(b, w)) / (sd * Math.SQRT2); return 0.5 * (1 + erf(z)); };
+    const winP = (a, b, w) => { if (w === liveWeek) { const lw = liveWin(a, b); if (lw != null) return lw; } const z = (proj(a, w) - proj(b, w)) / (sd * Math.SQRT2); return 0.5 * (1 + erf(z)); };
 
     function run(N) {
       const acc = Object.fromEntries(ids.map((r) => [r, { po: 0, bye: 0, w: 0, pf: 0, seed: Array(slots + 1).fill(0) }]));
@@ -490,7 +506,7 @@
         const W = {}, PF = {};
         cur.teams.forEach((t) => { W[t.rid] = t.w; PF[t.rid] = t.pf; });
         for (const wk of remaining) for (const [a, b] of wk.pairs) {
-          let pa = proj(a, wk.week) + randn() * sd, pb = proj(b, wk.week) + randn() * sd;
+          let pa = draw(a, wk.week), pb = draw(b, wk.week);
           const pick = picks[key(wk.week, a, b)];
           if (pick && (pick === a) !== (pa > pb)) { const t = pa; pa = pb; pb = t; }
           PF[a] += pa; PF[b] += pb; if (pa > pb) W[a]++; else W[b]++;
@@ -566,7 +582,7 @@
       const W = {}, PF = {};
       cur.teams.forEach((t) => { W[t.rid] = t.w; PF[t.rid] = t.pf; });
       for (const wk of remaining) for (const [a, b] of wk.pairs) {
-        const pa = proj(a, wk.week) + randn() * sd, pb = proj(b, wk.week) + randn() * sd;
+        const pa = draw(a, wk.week), pb = draw(b, wk.week);
         PF[a] += pa; PF[b] += pb; if (pa > pb) W[a]++; else W[b]++;
       }
       const cmp = (x, y) => W[y] - W[x] || PF[y] - PF[x];
@@ -650,7 +666,7 @@
     $("#games").innerHTML = myGames.map((g) => {
       const o = tm(cur, g.opp), isDiv = o.div === myDiv, sw = base.swing[g.week];
       const pw = sw.w[1] ? sw.w[0] / sw.w[1] : 0, pl = sw.l[1] ? sw.l[0] / sw.l[1] : 0;
-      const winP = (() => { const z = (proj(myRid, g.week) - proj(g.opp, g.week)) / (sd * Math.SQRT2); return 0.5 * (1 + erf(z)); })();
+      const winP = (() => { if (g.week === liveWeek) { const lw = liveWin(myRid, g.opp); if (lw != null) return lw; } const z = (proj(myRid, g.week) - proj(g.opp, g.week)) / (sd * Math.SQRT2); return 0.5 * (1 + erf(z)); })();
       return `<li class="game ${isDiv ? "is-div" : ""}">
         <span class="game__wk">Wk ${g.week}</span>
         <div class="game__opp">${tname(o)}<div class="game__meta">${isDiv ? `<span class="tag">Division</span>` : ""}${o.w}–${o.l} · win chance ${pct(winP)} · bye odds ${pct(pw)} with a W, ${pct(pl)} with an L${HIT[myRid][g.week] || HIT[g.opp][g.week] ? ` · bye hit: you ${sgn(-HIT[myRid][g.week])}, them ${sgn(-HIT[g.opp][g.week])}` : ""}</div></div>
@@ -852,7 +868,7 @@
     $("#homeTiles").innerHTML = tiles.map(([p, n, t, stat, d]) => `<a class="tile reveal" href="#/${p}"><span class="tile__n">${n}</span><span class="tile__t">${t}</span><span class="tile__stat">${esc(stat)}</span><span class="tile__d">${d}</span><span class="tile__go" aria-hidden="true">→</span></a>`).join("");
   })();
 
-  window.BBNF = { D, $, esc, f1, f0, sgn, pct, ord, tm, tname, avatar, tabs, observe, cur, odds: typeof base !== "undefined" ? base.acc : null };
+  window.BBNF = { D, $, esc, f1, f0, sgn, pct, ord, tm, tname, avatar, tabs, observe, cur, liveBoard, odds: typeof base !== "undefined" ? base.acc : null };
   route();
   observe();
 })();

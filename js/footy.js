@@ -22,7 +22,12 @@
   const mean = Object.fromEntries(F.teams.map((t) => [t.rid, (t.scores.length * t.avg + 4 * lg) / (t.scores.length + 4)]));
   const randn = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
   const erf = (x) => { const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x); return s * (1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x)); };
-  const winP = (a, b) => 0.5 * (1 + erf((mean[a] - mean[b]) / (sd * Math.SQRT2)));
+  const LV = window.LIVE && window.LIVE.footy ? window.LIVE : null;
+  const liveWeek = LV ? LV.week : null;
+  const liveT = LV ? LV.footy.teams : {};
+  const liveWin = (a, b) => { const g = LV && LV.footy.games.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a)); return g ? (g.a === a ? g.pA : 1 - g.pA) : null; };
+  const winP = (a, b, w) => { if (w === liveWeek) { const lw = liveWin(a, b); if (lw != null) return lw; } return 0.5 * (1 + erf((mean[a] - mean[b]) / (sd * Math.SQRT2))); };
+  const draw = (rid, w) => (w === liveWeek && liveT[rid] ? liveT[rid].proj + randn() * liveT[rid].sd : mean[rid] + randn() * sd);
 
   // ---------- picks: a typed score beats a winner pick beats a simulation ----------
   const key = (w, a, b) => `${F.season}:${w}:${Math.min(a, b)}-${Math.max(a, b)}`;
@@ -49,8 +54,8 @@
         let pa = scoreOf(g, g.a), pb = scoreOf(g, g.b);
         if (pa == null || pb == null) {
           const ra = pa == null, rb = pb == null;
-          if (ra) pa = mean[g.a] + randn() * sd;
-          if (rb) pb = mean[g.b] + randn() * sd;
+          if (ra) pa = draw(g.a, g.w);
+          if (rb) pb = draw(g.b, g.w);
           const pick = picks[g.k] && picks[g.k].w;
           if (pick && (pick === g.a) !== (pa > pb) && ra && rb) { const t = pa; pa = pb; pb = t; }
         }
@@ -72,14 +77,14 @@
       <article class="pk-week">
         <header><b>Week ${wk.week}</b><small>${wk.week === F.current ? "this week" : ""}</small></header>
         ${wk.pairs.map(([a, b]) => {
-          const g = { w: wk.week, a, b, k: key(wk.week, a, b) }, p = picks[g.k] || {}, pa = winP(a, b);
+          const g = { w: wk.week, a, b, k: key(wk.week, a, b) }, p = picks[g.k] || {}, pa = winP(a, b, wk.week);
           const mine = T[a].mine || T[b].mine, dec = decided(g);
           const side = (rid, chance) => {
             const t = T[rid], live = wk.week === F.current && F.live[rid] ? F.live[rid] : null;
             const on = dec ? scoreOf(g, rid) > scoreOf(g, rid === a ? b : a) : p.w === rid;
             return `<div class="ft-side ${on ? "on" : ""}">
               <button type="button" class="pk-team ${on ? "on" : ""}" data-k="${g.k}" data-w="${rid}" aria-pressed="${on}">${avatar(t)}<span class="pk-name">${esc(t.name)}<small>${t.w}–${t.l}${t.t ? "–" + t.t : ""} · ${Math.round(chance * 100)}%${live != null ? ` · ${f1(live)} so far` : ""}</small></span></button>
-              <input class="ft-score" type="number" inputmode="decimal" step="0.1" min="0" data-k="${g.k}" data-r="${rid}" value="${p.s && p.s[rid] != null ? p.s[rid] : ""}" placeholder="${f1(mean[rid])}" aria-label="${esc(t.name)} score, week ${wk.week}">
+              <input class="ft-score" type="number" inputmode="decimal" step="0.1" min="0" data-k="${g.k}" data-r="${rid}" value="${p.s && p.s[rid] != null ? p.s[rid] : ""}" placeholder="${f1(wk.week === liveWeek && liveT[rid] ? liveT[rid].proj : mean[rid])}" aria-label="${esc(t.name)} score, week ${wk.week}">
             </div>`;
           };
           return `<div class="ft-game ${mine ? "is-mine" : ""}">${side(a, pa)}<span class="ft-vs">vs</span>${side(b, 1 - pa)}</div>`;
@@ -114,7 +119,7 @@
     if (me) {
       const a = acc[me.rid], g = games.find((x) => x.w === F.current && (x.a === me.rid || x.b === me.rid));
       const oppId = g ? (g.a === me.rid ? g.b : g.a) : null;
-      $("#ftMe").innerHTML = `<div><span class="k">Your playoff odds</span><b>${pct(a.po)}</b></div><div><span class="k">Bye</span><b>${pct(a.bye)}</b></div><div><span class="k">Top 5 on record</span><b>${pct(a.top5)}</b></div><div><span class="k">In on points (6th)</span><b>${pct(a.sixth)}</b></div>${oppId ? `<div class="wide"><span class="k">This week</span><b class="small">vs ${esc(T[oppId].name)} (${T[oppId].w}–${T[oppId].l})</b><small>Model win chance ${pct(winP(me.rid, oppId))}. Pick or type a score to see how it moves your odds.</small></div>` : ""}`;
+      $("#ftMe").innerHTML = `<div><span class="k">Your playoff odds</span><b>${pct(a.po)}</b></div><div><span class="k">Bye</span><b>${pct(a.bye)}</b></div><div><span class="k">Top 5 on record</span><b>${pct(a.top5)}</b></div><div><span class="k">In on points (6th)</span><b>${pct(a.sixth)}</b></div>${oppId ? `<div class="wide"><span class="k">This week</span><b class="small">vs ${esc(T[oppId].name)} (${T[oppId].w}–${T[oppId].l})</b><small>${F.current === liveWeek ? "Live" : "Model"} win chance ${pct(winP(me.rid, oppId, F.current))}. Pick or type a score to see how it moves your odds.</small></div>` : ""}`;
     }
   }
 
@@ -146,9 +151,11 @@
     const chips = (r) => (r || []).slice(-5).map((x) => `<i class="rc rc--${x}">${x}</i>`).join("");
     const status = (i, t) => (i < BYES ? `<span class="pt-tag pt-keeper">Bye</span>` : i < BY_RECORD ? `<span class="pt-tag pt-used">In</span>` : t === sixth ? `<span class="pt-tag pt-used">In (points)</span>` : `<span class="pt-tag pt-pending">Out</span>`);
     $("#ftStLede").innerHTML = `Through week ${F.scored}. Seeds as if the season ended today: the top ${BY_RECORD} by record (points for breaks ties), the top ${BYES} get byes, and the ${ord(SEEDS)} seed is the highest scorer outside the top ${BY_RECORD}. "GB" is games behind the ${ord(BY_RECORD)} seed; "Pts back" is how far behind the points leader outside the top ${BY_RECORD} a team is.`;
-    $("#ftStTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th class="n">W–L</th><th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th class="n">Pts back</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => {
+    $("#ftStLive").innerHTML = LV && B.liveBoard ? B.liveBoard(LV.footy, (rid) => T[rid], me && me.rid, liveWeek) : "";
+    const hold = (t) => { if (!LV) return null; const g = LV.footy.games.find((x) => x.a === t.rid || x.b === t.rid); if (!g) return null; const p = g.a === t.rid ? g.pA : 1 - g.pA; return p >= 0.5 ? [t.w + 1, t.l, p] : [t.w, t.l + 1, p]; };
+    $("#ftStTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th class="n">W–L</th>${LV ? `<th class="n">If wk ${liveWeek} holds</th>` : ""}<th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th class="n">Pts back</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => {
       const gb = Wn(fifth) - Wn(t), ptsBack = i >= BY_RECORD && t !== sixth ? sixth.pf - t.pf : null;
-      return `<tr class="${t.mine ? "is-me" : ""} ${i === SEEDS - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${avatar(t)} ${esc(t.name)}</td><td class="n"><b>${t.w}–${t.l}${t.t ? "–" + t.t : ""}</b></td><td class="n">${f1(t.pf)}</td><td class="n">${t.pa != null ? f1(t.pa) : "–"}</td><td class="n">${gb > 0 ? gb : "–"}</td><td class="n">${ptsBack != null ? f1(ptsBack) : "–"}</td><td><span class="rcs">${chips(t.results)}</span></td><td class="n">${streak(t.results)}</td><td>${status(i, t)}</td></tr>`;
+      return `<tr class="${t.mine ? "is-me" : ""} ${i === SEEDS - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${avatar(t)} ${esc(t.name)}</td><td class="n"><b>${t.w}–${t.l}${t.t ? "–" + t.t : ""}</b></td>${LV ? (() => { const x = hold(t); return `<td class="n">${x ? `${x[0]}–${x[1]} <small class="muted">${pct(x[2])}</small>` : "–"}</td>`; })() : ""}<td class="n">${f1(t.pf)}</td><td class="n">${t.pa != null ? f1(t.pa) : "–"}</td><td class="n">${gb > 0 ? gb : "–"}</td><td class="n">${ptsBack != null ? f1(ptsBack) : "–"}</td><td><span class="rcs">${chips(t.results)}</span></td><td class="n">${streak(t.results)}</td><td>${status(i, t)}</td></tr>`;
     }).join("")}</tbody></table>`;
   })();
 

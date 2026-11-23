@@ -334,6 +334,9 @@ def main():
     except Exception as e:
         print("compare data skipped:", e)
         out["compare"] = None
+    # live in-browser projections need the league id and its scoring rules
+    out["leagueId"] = cur_s["league"]["league_id"]
+    out["scoring"] = cur_s["league"]["scoring_settings"]
     try:
         out["research"] = research.build(get_url, cur_s["league"], cur_s["rosters"], cur_s["users"], players, ME)
     except Exception as e:  # research data is a bonus; never block the main refresh
