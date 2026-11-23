@@ -112,7 +112,9 @@
   (function hero() {
     const m = C.m;
     $("#heroEyebrow").textContent = `${cur.name} · ${cur.divisions[m.div]} · ${cur.season} week ${cur.weeksDone}`;
-    $("#heroTitle").innerHTML = `<span class="line"><span>${m.w}&ndash;${m.l}.</span></span><span class="line"><span><em>Still robbed.</em></span></span>`;
+    const LVh = window.LIVE && window.LIVE.fugazi, gh = LVh && LVh.games.find((x) => x.a === cur.myRid || x.b === cur.myRid);
+    const ph = gh ? (gh.a === cur.myRid ? gh.pA : 1 - gh.pA) : null, hw = m.w + (ph != null && ph >= 0.5 ? 1 : 0), hl = m.l + (ph != null && ph < 0.5 ? 1 : 0);
+    $("#heroTitle").innerHTML = `<span class="line"><span>${hw}&ndash;${hl}.</span></span><span class="line"><span><em>Still robbed.</em></span></span>`;
     $("#heroSub").textContent = `${m.name} has scored ${f0(m.pf)} points in ${cur.season}, ${C.pfRank === 1 ? "the most in the league" : `${ord(C.pfRank)} in the league`}, and has had ${f0(m.pa)} scored against it, ${C.paRank === 1 ? (C.pfRank === 1 ? "also the most in the league" : "the most in the league") : `${ord(C.paRank)}-most in the league`}. This site exists so its manager can prove they are not going insane.`;
     $("#sbSeason").textContent = `${cur.season} season · through week ${cur.weeksDone}`;
     $("#sbGrid").innerHTML = [
@@ -468,7 +470,9 @@
   // ---------- current standings ----------
   (function standings() {
     if (!document.getElementById("stTable")) return;
-    const ts = cur.teams;
+    // with a week in progress, records include each game's projected winner (live favourite)
+    const projT = (t) => { if (!LIVE) return t; const g = LIVE.fugazi.games.find((x) => x.a === t.rid || x.b === t.rid); if (!g) return t; const p = g.a === t.rid ? g.pA : 1 - g.pA, mine = LIVE.fugazi.teams[t.rid], opp = LIVE.fugazi.teams[g.a === t.rid ? g.b : g.a]; const win = p >= 0.5; return { ...t, w: t.w + (win ? 1 : 0), l: t.l + (win ? 0 : 1), pf: t.pf + mine.proj, pa: (t.pa || 0) + opp.proj, nowW: t.w, nowL: t.l, liveP: p }; };
+    const ts = cur.teams.map(projT);
     const res = Object.fromEntries(ts.map((t) => [t.rid, []]));
     cur.weeks.forEach((wk) => Object.entries(wk).forEach(([rid, v]) => { const o = wk[v.opp]; res[rid] && res[rid].push(v.pts > o.pts ? "W" : v.pts < o.pts ? "L" : "T"); }));
     const cmp = (x, y) => y.w - x.w || y.pf - x.pf;
@@ -480,9 +484,9 @@
     const chips = (r) => r.slice(-5).map((x) => `<i class="rc rc--${x}">${x}</i>`).join("");
     const gb = (t) => { const d = line.w - t.w; return d <= 0 ? "–" : String(d); };
     const status = (i) => (i < 2 ? `<span class="pt-tag pt-keeper">Bye</span>` : i < slots ? `<span class="pt-tag pt-used">In</span>` : `<span class="pt-tag pt-pending">Out</span>`);
-    $("#stLede").innerHTML = `Through week ${cur.weeksDone}. Seeds as if the season ended today: the two division winners get the byes (seeds 1–2), then the next ${slots - 2} teams by record, with points for as the tiebreaker. "GB" is games behind the ${ord(slots)} seed.`;
-    const hold = (t) => { if (!LIVE) return null; const g = LIVE.fugazi.games.find((x) => x.a === t.rid || x.b === t.rid); if (!g) return null; const p = g.a === t.rid ? g.pA : 1 - g.pA; return p >= 0.5 ? [t.w + 1, t.l, p] : [t.w, t.l + 1, p]; };
-    $("#stTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th>Div</th><th class="n">W–L</th>${LIVE ? `<th class="n">If wk ${liveWeek} holds</th>` : ""}<th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""} ${i === slots - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${tname(t)}</td><td>${esc((cur.divisions[t.div] || "").replace(" NY", ""))}</td><td class="n"><b>${t.w}–${t.l}</b></td>${LIVE ? (() => { const x = hold(t); return `<td class="n">${x ? `${x[0]}–${x[1]} <small class="muted">${pct(x[2])}</small>` : "–"}</td>`; })() : ""}<td class="n">${f1(t.pf)}</td><td class="n">${f1(t.pa)}</td><td class="n">${gb(t)}</td><td><span class="rcs">${chips(res[t.rid])}</span></td><td class="n">${streak(res[t.rid])}</td><td>${status(i)}</td></tr>`).join("")}</tbody></table>`;
+    $("#stLede").innerHTML = `${LIVE ? `<b>* Records, points and seeds include week ${liveWeek}, projected live</b> (each game goes to its current favourite). ` : ""}Through week ${cur.weeksDone}${LIVE ? ` plus week ${liveWeek} in progress` : ""}. Seeds as if the season ended today: the two division winners get the byes (seeds 1–2), then the next ${slots - 2} teams by record, with points for as the tiebreaker. "GB" is games behind the ${ord(slots)} seed.`;
+    const hold = (t) => (t.nowW == null ? null : [t.nowW, t.nowL, t.liveP]);
+    $("#stTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th>Div</th><th class="n">W–L</th>${LIVE ? `<th class="n">Before wk ${liveWeek}</th>` : ""}<th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => `<tr class="${t.rid === cur.myRid ? "is-me" : ""} ${i === slots - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${tname(t)}</td><td>${esc((cur.divisions[t.div] || "").replace(" NY", ""))}</td><td class="n"><b>${t.w}–${t.l}</b>${t.nowW != null ? `<sup class="proj-mark">*</sup><br><small class="muted">${pct(t.liveP)} to win wk ${liveWeek}</small>` : ""}</td>${LIVE ? (() => { const x = hold(t); return `<td class="n">${x ? `${x[0]}–${x[1]}` : "–"}</td>`; })() : ""}<td class="n">${f1(t.pf)}</td><td class="n">${f1(t.pa)}</td><td class="n">${gb(t)}</td><td><span class="rcs">${chips(res[t.rid])}</span></td><td class="n">${streak(res[t.rid])}</td><td>${status(i)}</td></tr>`).join("")}</tbody></table>`;
     $("#stLive").innerHTML = LIVE ? liveBoard(LIVE.fugazi, (rid) => tm(cur, rid), cur.myRid, liveWeek) : "";
     $("#stDivs").innerHTML = [1, 2].map((d) => {
       const rows = ts.filter((t) => t.div === d).sort(cmp), lead = rows[0];

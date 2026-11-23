@@ -142,7 +142,8 @@
   // ---------- current standings ----------
   (function standings() {
     const Wn = (t) => t.w + t.t * 0.5;
-    const order = [...F.teams].sort((x, y) => Wn(y) - Wn(x) || y.pf - x.pf);
+    const projT = (t) => { if (!LV) return t; const g = LV.footy.games.find((x) => x.a === t.rid || x.b === t.rid); if (!g) return t; const p = g.a === t.rid ? g.pA : 1 - g.pA, mine = LV.footy.teams[t.rid], opp = LV.footy.teams[g.a === t.rid ? g.b : g.a]; const win = p >= 0.5; return { ...t, w: t.w + (win ? 1 : 0), l: t.l + (win ? 0 : 1), pf: t.pf + mine.proj, pa: (t.pa || 0) + opp.proj, nowW: t.w, nowL: t.l, liveP: p }; };
+    const order = F.teams.map(projT).sort((x, y) => Wn(y) - Wn(x) || y.pf - x.pf);
     const top = order.slice(0, BY_RECORD), rest = order.slice(BY_RECORD).sort((x, y) => y.pf - x.pf);
     const sixth = rest[0];
     const seeded = [...top, sixth, ...order.slice(BY_RECORD).filter((t) => t !== sixth)];
@@ -150,12 +151,12 @@
     const streak = (r) => { if (!r || !r.length) return "–"; const last = r[r.length - 1]; let n = 0; for (let i = r.length - 1; i >= 0 && r[i] === last; i--) n++; return last + n; };
     const chips = (r) => (r || []).slice(-5).map((x) => `<i class="rc rc--${x}">${x}</i>`).join("");
     const status = (i, t) => (i < BYES ? `<span class="pt-tag pt-keeper">Bye</span>` : i < BY_RECORD ? `<span class="pt-tag pt-used">In</span>` : t === sixth ? `<span class="pt-tag pt-used">In (points)</span>` : `<span class="pt-tag pt-pending">Out</span>`);
-    $("#ftStLede").innerHTML = `Through week ${F.scored}. Seeds as if the season ended today: the top ${BY_RECORD} by record (points for breaks ties), the top ${BYES} get byes, and the ${ord(SEEDS)} seed is the highest scorer outside the top ${BY_RECORD}. "GB" is games behind the ${ord(BY_RECORD)} seed; "Pts back" is how far behind the points leader outside the top ${BY_RECORD} a team is.`;
+    $("#ftStLede").innerHTML = `${LV ? `<b>* Records, points and seeds include week ${liveWeek}, projected live</b> (each game goes to its current favourite). ` : ""}Through week ${F.scored}${LV ? ` plus week ${liveWeek} in progress` : ""}. Seeds as if the season ended today: the top ${BY_RECORD} by record (points for breaks ties), the top ${BYES} get byes, and the ${ord(SEEDS)} seed is the highest scorer outside the top ${BY_RECORD}. "GB" is games behind the ${ord(BY_RECORD)} seed; "Pts back" is how far behind the points leader outside the top ${BY_RECORD} a team is.`;
     $("#ftStLive").innerHTML = LV && B.liveBoard ? B.liveBoard(LV.footy, (rid) => T[rid], me && me.rid, liveWeek) : "";
-    const hold = (t) => { if (!LV) return null; const g = LV.footy.games.find((x) => x.a === t.rid || x.b === t.rid); if (!g) return null; const p = g.a === t.rid ? g.pA : 1 - g.pA; return p >= 0.5 ? [t.w + 1, t.l, p] : [t.w, t.l + 1, p]; };
-    $("#ftStTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th class="n">W–L</th>${LV ? `<th class="n">If wk ${liveWeek} holds</th>` : ""}<th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th class="n">Pts back</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => {
+    const hold = (t) => (t.nowW == null ? null : [t.nowW, t.nowL, t.liveP]);
+    $("#ftStTable").innerHTML = `<table class="sttable"><thead><tr><th class="n">Seed</th><th>Team</th><th class="n">W–L</th>${LV ? `<th class="n">Before wk ${liveWeek}</th>` : ""}<th class="n">PF</th><th class="n">PA</th><th class="n">GB</th><th class="n">Pts back</th><th>Last 5</th><th class="n">Streak</th><th></th></tr></thead><tbody>${seeded.map((t, i) => {
       const gb = Wn(fifth) - Wn(t), ptsBack = i >= BY_RECORD && t !== sixth ? sixth.pf - t.pf : null;
-      return `<tr class="${t.mine ? "is-me" : ""} ${i === SEEDS - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${avatar(t)} ${esc(t.name)}</td><td class="n"><b>${t.w}–${t.l}${t.t ? "–" + t.t : ""}</b></td>${LV ? (() => { const x = hold(t); return `<td class="n">${x ? `${x[0]}–${x[1]} <small class="muted">${pct(x[2])}</small>` : "–"}</td>`; })() : ""}<td class="n">${f1(t.pf)}</td><td class="n">${t.pa != null ? f1(t.pa) : "–"}</td><td class="n">${gb > 0 ? gb : "–"}</td><td class="n">${ptsBack != null ? f1(ptsBack) : "–"}</td><td><span class="rcs">${chips(t.results)}</span></td><td class="n">${streak(t.results)}</td><td>${status(i, t)}</td></tr>`;
+      return `<tr class="${t.mine ? "is-me" : ""} ${i === SEEDS - 1 ? "cut" : ""}"><td class="n"><b>${i + 1}</b></td><td>${avatar(t)} ${esc(t.name)}</td><td class="n"><b>${t.w}–${t.l}${t.t ? "–" + t.t : ""}</b>${t.nowW != null ? `<sup class="proj-mark">*</sup><br><small class="muted">${pct(t.liveP)} to win wk ${liveWeek}</small>` : ""}</td>${LV ? (() => { const x = hold(t); return `<td class="n">${x ? `${x[0]}–${x[1]}` : "–"}</td>`; })() : ""}<td class="n">${f1(t.pf)}</td><td class="n">${t.pa != null ? f1(t.pa) : "–"}</td><td class="n">${gb > 0 ? gb : "–"}</td><td class="n">${ptsBack != null ? f1(ptsBack) : "–"}</td><td><span class="rcs">${chips(t.results)}</span></td><td class="n">${streak(t.results)}</td><td>${status(i, t)}</td></tr>`;
     }).join("")}</tbody></table>`;
   })();
 
