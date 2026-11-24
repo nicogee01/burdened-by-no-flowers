@@ -102,7 +102,7 @@
     const rec = (t) => `${t.w2 >> 1}–${t.l}${t.t ? "–" + t.t : ""}`;
     const nm = (r) => esc(P.T[r].name);
     const n0 = (v) => v.toLocaleString();
-    const cell = (a, n) => `${n0(a)} <small class="muted">${n ? pct(a / n) : "–"}</small>`;
+    const cell = (a, n) => `<span class="scn-c">${n0(a)}</span> <small class="muted">${n ? pct(a / n) : "–"}</small>`;
     const winnerOf = (g, side) => (side ? g.b : g.a);
     let done = false, R = null, rid = null, kSel = null, locks = {}, goal = "po";
 
