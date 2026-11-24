@@ -11,12 +11,12 @@
   const MAX_GAMES = 20;
   const phi = (z) => { const s = Math.sign(z), x = Math.abs(z), t = 1 / (1 + 0.3275911 * x); return 0.5 * (1 + s * (1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x))); };
 
-  function prepare(cfg) {
+  function prepare(cfg, useLive) {
     const teams = cfg.teams.map((t) => ({ rid: t.rid, name: t.name, div: t.div, w2: 2 * t.w + (t.t || 0), l: t.l, t: t.t || 0, pf: t.pf, mine: t.rid === cfg.myRid }));
     const T = Object.fromEntries(teams.map((t) => [t.rid, t]));
     let from = cfg.done + 1, liveNote = "";
     const L = cfg.live;
-    if (L && L.week === cfg.done + 1 && L.games && L.games.length) {
+    if (useLive && liveReady(cfg)) {
       L.games.forEach((g) => {
         const a = T[g.a], b = T[g.b];
         if (!a || !b) return;
@@ -26,6 +26,8 @@
       });
       from = L.week + 1;
       liveNote = `Week ${L.week} is counted as finishing exactly on projection (each game goes to the team projected to win, and points for include the projected finals). `;
+    } else if (liveReady(cfg)) {
+      liveNote = `Week ${L.week} is still open: every game in it counts as a win or a loss like the rest. `;
     }
     const games = cfg.schedule.filter((w) => w.week >= from && w.week <= cfg.regEnd).flatMap((w) => w.pairs.map(([a, b]) => ({ w: w.week, a, b })));
     const all = cfg.teams.flatMap((t) => t.scores || []);
@@ -94,10 +96,23 @@
     return { N, G, myG, Wt, K, P1, B1, P2, B2, P3 };
   }
 
+  const liveReady = (cfg) => { const L = cfg.live; return !!(L && L.week === cfg.done + 1 && L.games && L.games.length); };
+  // share of this week's starters whose games are over
+  const liveDoneShare = (cfg) => { if (!liveReady(cfg)) return 0; let d = 0, l = 0; Object.values(cfg.live.teams).forEach((t) => { d += t.done || 0; l += t.left || 0; }); return d + l ? d / (d + l) : 0; };
+
   function mount(root, cfg) {
     if (!root) return;
-    const P = prepare(cfg);
+    const share = liveDoneShare(cfg);
+    let useLive = share >= 0.75; // only once the week is basically over
+    let P = prepare(cfg, useLive);
     const sel = root.querySelector("select"), out = root.querySelector(".scn-out");
+    if (liveReady(cfg)) {
+      const tg = document.createElement("label");
+      tg.className = "scn-livetoggle";
+      tg.innerHTML = `<input type="checkbox" ${useLive ? "checked" : ""}> <span>Count week ${cfg.live.week} as finishing on projection <small class="muted">(${Math.round(share * 100)}% of starters' games are over${useLive ? "" : "; turns on by itself at 75%"})</small></span>`;
+      sel.closest("label").after(tg);
+      tg.querySelector("input").addEventListener("change", (e) => { useLive = e.target.checked; P = prepare(cfg, useLive); setLede(); if (done) compute(); });
+    }
     sel.innerHTML = [...P.teams].sort((a, b) => b.w2 - a.w2 || b.pf - a.pf).map((t) => `<option value="${t.rid}" ${t.mine ? "selected" : ""}>${esc(t.name)}${t.mine ? " (you)" : ""}</option>`).join("");
     const rec = (t) => `${t.w2 >> 1}–${t.l}${t.t ? "–" + t.t : ""}`;
     const nm = (r) => esc(P.T[r].name);
@@ -194,7 +209,8 @@
     });
     out.addEventListener("keydown", (e) => { const row = e.target.closest(".scn-row"); if (row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); row.click(); } });
     sel.addEventListener("change", compute);
-    root.querySelector(".scn-lede").innerHTML = `Every remaining game is either a win or a loss, so this counts every possible combination exactly. Scores are ignored. ${P.liveNote}${cfg.rulesNote} When teams tie on record, <b>Playoffs</b> and <b>Bye</b> break the tie by points for as they stand now; the <b>no tiebreak needed</b> columns count only the combinations where record alone gets the team in. <b>Model odds</b> weight every combination by how likely its results are (each team's scoring this season, pulled toward the league average) instead of treating every game as a coin flip.`;
+    const setLede = () => (root.querySelector(".scn-lede").innerHTML = `Every remaining game is either a win or a loss, so this counts every possible combination exactly. Scores are ignored. ${P.liveNote}${cfg.rulesNote} When teams tie on record, <b>Playoffs</b> and <b>Bye</b> break the tie by points for as they stand now; the <b>no tiebreak needed</b> columns count only the combinations where record alone gets the team in. <b>Model odds</b> weight every combination by how likely its results are (each team's scoring this season, pulled toward the league average) instead of treating every game as a coin flip.`);
+    setLede();
     const sub = root.closest(".sub");
     const go = () => { if (done || (sub && sub.hidden)) return; done = true; compute(); };
     document.addEventListener("pagechange", () => setTimeout(go, 0));
