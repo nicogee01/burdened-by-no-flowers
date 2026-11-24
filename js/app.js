@@ -198,8 +198,12 @@
       ["League record", f0(rec.pa), `${esc(rec.t.name)}, ${rec.s.season}`, "good"],
     ].map(([k, v, d, c]) => `<div><dt>${k}</dt><dd class="${c}">${v}</dd><p>${d}</p></div>`).join("");
 
-    // leaderboard: top 10 completed seasons, plus your pace and any other pace above the record
-    const board = [...complete.slice(0, 10), ...rows.filter((r) => r.partial && (r.mine || r.pa >= rec.pa))].sort((a, b) => b.pa - a.pa);
+    // leaderboard: top 10 of every finished season and every current team's pace, plus you if you're outside it
+    const pool = [...complete, ...rows.filter((r) => r.partial && r.s === cur)].sort((a, b) => b.pa - a.pa);
+    const board = pool.slice(0, 10);
+    if (!board.includes(myCur)) board.push(myCur);
+    if (!board.includes(rec)) board.push(rec);
+    board.sort((a, b) => b.pa - a.pa);
     const max = board[0].pa;
     $("#paceChart").innerHTML = `<ol class="paceboard">${board.map((r, i) => {
       const cls = r.partial && r.mine ? "is-me" : r === rec ? "is-rec" : r.partial ? "is-pace" : "";
@@ -244,7 +248,11 @@
       ["League record", f0(rec.pf), `${esc(rec.t.name)}, ${rec.s.season} (${rec.t.w}–${rec.t.l})`, "good"],
     ].map(([k, v, d, c]) => `<div><dt>${k}</dt><dd class="${c}">${v}</dd><p>${d}</p></div>`).join("");
 
-    const board = [...complete.slice(0, 10), ...rows.filter((r) => r.partial && (r.mine || r.pf >= rec.pf))].sort((a, b) => b.pf - a.pf);
+    const pool = [...complete, ...rows.filter((r) => r.partial && r.s === cur)].sort((a, b) => b.pf - a.pf);
+    const board = pool.slice(0, 10);
+    if (!board.includes(myCur)) board.push(myCur);
+    if (!board.includes(rec)) board.push(rec);
+    board.sort((a, b) => b.pf - a.pf);
     const max = board[0].pf;
     $("#pfChart").innerHTML = `<ol class="paceboard">${board.map((r, i) => {
       const cls = r.partial && r.mine ? "is-me" : r === rec ? "is-rec" : r.partial ? "is-pace" : "";
